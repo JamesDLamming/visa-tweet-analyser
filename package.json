@@ -1,0 +1,53 @@
+{
+  "name": "visakanv-analysis",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^3.2.3",
+    "@emotion/react": "^11.13.5",
+    "@emotion/styled": "^11.13.5",
+    "@supabase/supabase-js": "^2.47.2",
+    "axios": "^1.7.9",
+    "chart.js": "^4.4.7",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "collections": "^5.1.13",
+    "date-fns": "^4.1.0",
+    "datetime": "^0.0.3",
+    "fas": "^0.3.6",
+    "framer-motion": "^11.13.1",
+    "json": "^11.0.0",
+    "os": "^0.1.2",
+    "pandas": "^0.0.3",
+    "papaparse": "^5.4.1",
+    "re": "^0.1.4",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.0.2",
+    "recharts": "^2.14.1",
+    "requests": "^0.3.0",
+    "tqdm": "^2.0.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.15.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.15.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.12.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "vite": "^6.0.1"
+  }
+}
