@@ -7,7 +7,7 @@ def run_step(step_name, script_name):
     print(f"Starting {step_name} at {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'='*50}")
     
-    result = os.system(f'python {script_name}')
+    result = os.system(f'python3 {script_name}')
     
     if result != 0:
         raise Exception(f"Error running {script_name}")
