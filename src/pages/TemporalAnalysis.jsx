@@ -288,8 +288,8 @@ function TemporalAnalysis() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">
           {showNormalized
-            ? "Top 1000 Tweets (Normalized by Age)"
-            : "Top 1000 Quoted Tweets"}
+            ? "Top 1,000 Tweets (Normalized by Age)"
+            : "Top 1,000 Quoted Tweets"}
         </h1>
         <div className="space-x-2">
           <button
