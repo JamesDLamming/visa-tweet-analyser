@@ -26,7 +26,7 @@ def extract_tweets_with_visakanv_urls(tweets_array):
 
 def main():
     # Read the JSON file
-    print("Reading the JSON file...")
+    print("Reading the JSON file...", flush=True)
     try:
         with open('tweets.json', 'r', encoding='utf-8') as file:
             json_data = json.load(file)
@@ -37,14 +37,14 @@ def main():
             flattened_tweets.extend(tweet_array)
         
         # Extract matching tweets
-        print("Extracting tweets with URLs containing 'visakanv'...")
+        print("Extracting tweets with URLs containing 'visakanv'...", flush=True)
         matching_tweets = extract_tweets_with_visakanv_urls(flattened_tweets)
         
         # Save the results to a new JSON file
         with open('selfQuotedTweets.json', 'w', encoding='utf-8') as file:
             json.dump(matching_tweets, file, indent=2)
         
-        print(f"Found {len(matching_tweets)} tweets with URLs containing 'visakanv'")
+        print(f"Found {len(matching_tweets)} tweets with URLs containing 'visakanv'", flush=True)
         
     except json.JSONDecodeError as e:
         print(f"Error decoding JSON: {e}")

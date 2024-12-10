@@ -6,12 +6,12 @@ def load_json_file(filename):
 
 def extract_tweet_info():
     # Load both JSON files
-    print("Loading JSON files...")
+    print("Loading JSON files...", flush=True)
     count_data = load_json_file('countSelfQuotes.json')
     tweets_data = load_json_file('tweets.json')
     
     # Create a dictionary of tweets for faster lookup
-    print("Creating tweet dictionary...")
+    print("Creating tweet dictionary...", flush=True)
     tweets_dict = {}
     for tweet_list in tweets_data:
         for tweet_obj in tweet_list:
@@ -20,7 +20,7 @@ def extract_tweet_info():
                 tweets_dict[tweet['id_str']] = tweet
 
     # Match counts with tweets
-    print("Matching counts with tweets...")
+    print("Matching counts with tweets...", flush=True)
     results = []
     not_found_count = 0
     not_found_tweets = []  # List to store not found tweets
@@ -90,11 +90,11 @@ def extract_tweet_info():
         results.append(result)
     
     # Sort by count in descending order
-    print("Sorting tweets by count...")
+    print("Sorting tweets by count...", flush=True)
     results.sort(key=lambda x: x['count'], reverse=True)
     
 
-    print("Tweets not found: ", not_found_count)
+    print("Tweets not found: ", not_found_count, flush=True)
     
     with open('tweet_results.json', 'w', encoding='utf-8') as f:
         json.dump(results, f, ensure_ascii=False, indent=2)

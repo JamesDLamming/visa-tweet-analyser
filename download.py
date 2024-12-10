@@ -9,7 +9,7 @@ url = f'https://fabxmporizzqflnftavs.supabase.co/storage/v1/object/public/archiv
 def downloadUserData(username):
   output_filename = f'{username}.json'
   
-  print("Downloading tweet data for:", username)
+  print("Downloading tweet data for:", username, flush=True)
   response = requests.get(url, stream=True)
   total_size = int(response.headers.get('content-length', 0))
   progress_bar = tqdm(total=total_size, unit='B', unit_scale=True, desc="Downloading JSON")
