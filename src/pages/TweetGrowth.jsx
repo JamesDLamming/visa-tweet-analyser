@@ -32,26 +32,34 @@ function TweetGrowth() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/public/tweet_results.json").then((res) => res.json()),
-      fetch("/public/upload.json").then((res) => res.json()),
-      fetch("/public/selfQuotedTweets.json").then((res) => res.json()),
+      fetch("/tweets.json").then((res) => res.json()),
+      fetch("/upload.json").then((res) => res.json()),
+      fetch("/selfQuotedTweets.json").then((res) => res.json()),
     ])
       .then(([tweets, uploadData, quotesData]) => {
         const uploadDate = new Date(uploadData[0].endDate);
         setUploadDate(uploadDate);
 
-        // Process regular tweets
+        // Process regular tweets - handle nested structure and add validation
         const sortedTweets = tweets
-          .filter((tweet) => tweet.tweet_text !== "Tweet not found")
-          .map((tweet) => new Date(tweet.created_at))
+          .filter((t) => t && t.tweet && t.tweet.created_at) // Validate tweet exists
+          .map((t) => new Date(t.tweet.created_at))
+          .filter((date) => !isNaN(date)) // Filter out invalid dates
           .sort((a, b) => a - b);
 
-        // Process quoted tweets
+        // Process quoted tweets - handle nested structure and add validation
         const sortedQuotes = quotesData
-          .map((quote) => new Date(quote.created_at))
+          .filter((q) => q && q.created_at) // Validate tweet exists
+          .map((q) => new Date(q.created_at))
+          .filter((date) => !isNaN(date)) // Filter out invalid dates
           .sort((a, b) => a - b);
 
-        // Create a map of all months between first tweet and upload date
+        // Ensure we have valid tweets before proceeding
+        if (sortedTweets.length === 0) {
+          throw new Error("No valid tweets found");
+        }
+
+        // Create monthly data
         const monthlyData = {};
         const startDate = new Date(sortedTweets[0]);
         const currentDate = new Date(startDate);
@@ -64,16 +72,25 @@ function TweetGrowth() {
 
         // Count tweets per month
         sortedTweets.forEach((date) => {
-          const key = date.toISOString().slice(0, 7);
-          monthlyData[key].tweets += 1;
+          if (date && !isNaN(date)) {
+            // Add date validation
+            const key = date.toISOString().slice(0, 7);
+            if (monthlyData[key]) {
+              // Check if key exists
+              monthlyData[key].tweets += 1;
+            }
+          }
         });
 
         // Count quotes per month
         sortedQuotes.forEach((date) => {
-          const key = date.toISOString().slice(0, 7);
-          if (monthlyData[key]) {
-            // Only count if within our date range
-            monthlyData[key].quotes += 1;
+          if (date && !isNaN(date)) {
+            // Add date validation
+            const key = date.toISOString().slice(0, 7);
+            if (monthlyData[key]) {
+              // Check if key exists
+              monthlyData[key].quotes += 1;
+            }
           }
         });
 
@@ -224,6 +241,11 @@ function TweetGrowth() {
     ).date;
   };
 
+  const getYearsActive = () => {
+    if (!uploadDate || !tweetData || tweetData.length === 0) return 0;
+    return new Date(uploadDate - tweetData[0].date).getFullYear() - 1970;
+  };
+
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
@@ -254,11 +276,7 @@ function TweetGrowth() {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-lg shadow">
-        <Line data={chartData} options={chartOptions} />
-      </div>
-
-      <div className="mt-6 bg-white p-4 rounded-lg shadow">
+      <div className="mb-6 bg-white p-4 rounded-lg shadow">
         <h2 className="text-xl font-semibold mb-4">Key Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="p-4 border rounded">
@@ -278,11 +296,12 @@ function TweetGrowth() {
           </div>
           <div className="p-4 border rounded">
             <h3 className="text-lg font-medium mb-2">Years Active</h3>
-            <p className="text-2xl font-bold">
-              {new Date(uploadDate - tweetData[0].date).getFullYear() - 1970}
-            </p>
+            <p className="text-2xl font-bold">{getYearsActive()}</p>
           </div>
         </div>
+      </div>
+      <div className="bg-white p-4 rounded-lg shadow">
+        <Line data={chartData} options={chartOptions} />
       </div>
     </div>
   );

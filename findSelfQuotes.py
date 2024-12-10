@@ -4,13 +4,15 @@ def extract_tweets_with_visakanv_urls(tweets_array):
     # Initialize an empty list to store matching tweets
     matching_tweets = []
     
-    # First, flatten the array since tweets_array is an array of arrays
+    # Flatten and handle the nested tweet structure
     flattened_tweets = []
-    for tweet_array in tweets_array:
-        if isinstance(tweet_array, list):
-            flattened_tweets.extend(tweet_array)
+    for tweet_item in tweets_array:
+        if 'tweet' in tweet_item:  # Handle the nested tweet structure
+            flattened_tweets.append(tweet_item['tweet'])
+        elif isinstance(tweet_item, list):
+            flattened_tweets.extend(tweet_item)
         else:
-            flattened_tweets.append(tweet_array)
+            flattened_tweets.append(tweet_item)
     
     # Iterate through each tweet object in the flattened array
     for tweet_obj in flattened_tweets:

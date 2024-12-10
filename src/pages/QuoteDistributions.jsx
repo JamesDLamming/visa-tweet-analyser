@@ -58,9 +58,9 @@ function QuoteDistributions() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/public/tweet_results.json").then((res) => res.json()),
-      fetch("/public/upload.json").then((res) => res.json()),
-      fetch("/public/selfQuotedTweets.json").then((res) => res.json()),
+      fetch("/tweet_results.json").then((res) => res.json()),
+      fetch("/upload.json").then((res) => res.json()),
+      fetch("/selfQuotedTweets.json").then((res) => res.json()),
     ])
       .then(([tweetData, uploadData, quotesData]) => {
         const uploadDate = new Date(uploadData[0].endDate);
@@ -334,8 +334,8 @@ function QuoteDistributions() {
         <div className="md:col-span-1 bg-white p-4 rounded-lg shadow overflow-auto max-h-[800px]">
           <h2 className="text-xl font-semibold mb-4">
             {showNormalized
-              ? "Top 100 Tweets by Quotes per Month"
-              : "Top 100 Most Quoted Tweets"}
+              ? "Top 100 Tweets (Quotes per Month)"
+              : "Top 100 Tweets (Total Quotes)"}
           </h2>
           <div className="space-x-2 ">
             <select

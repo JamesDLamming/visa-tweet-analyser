@@ -11,10 +11,10 @@ function Home() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/public/tweet_results.json").then((res) => res.json()),
-      fetch("/public/selfQuotedTweets.json").then((res) => res.json()),
-      fetch("/public/totalTweetLength.json").then((res) => res.json()),
-      fetch("/public/upload.json").then((res) => res.json()),
+      fetch("/tweet_results.json").then((res) => res.json()),
+      fetch("/selfQuotedTweets.json").then((res) => res.json()),
+      fetch("/totalTweetLength.json").then((res) => res.json()),
+      fetch("/upload.json").then((res) => res.json()),
     ])
       .then(
         ([tweetResults, selfQuotedTweets, totalTweetLength, uploadDetails]) => {
@@ -36,8 +36,6 @@ function Home() {
         setLoading(false);
       });
   }, []);
-
-  console.log(stats);
 
   if (loading) {
     return (
@@ -62,7 +60,7 @@ function Home() {
             Visa&apos;s Tweet Analysis
           </h1>
           <p className="text-xl text-gray-600">
-            Exploring patterns in {stats.totalTweets.toLocaleString()} tweets
+            Exploring the art of self-quotation
           </p>
         </div>
 
@@ -78,25 +76,42 @@ function Home() {
             <h2 className="text-3xl font-bold text-green-600 mb-2">
               {stats.uniqueQuotedTweets.toLocaleString()}
             </h2>
-            <p className="text-gray-600">Unique Tweets Quoted</p>
+            <p className="text-gray-600">Unique Tweets Self-Quoted</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
             <h2 className="text-3xl font-bold text-purple-600 mb-2">
               {stats.totalTweets.toLocaleString()}
             </h2>
-            <p className="text-gray-600">
-              Total Tweets Analyzed<br></br>
-              {new Date(stats.uploadStats[0].startDate).toLocaleDateString(
-                "en-US",
-                { day: "2-digit", month: "short", year: "numeric" }
-              )}{" "}
-              to{" "}
-              {new Date(stats.uploadStats[0].endDate).toLocaleDateString(
-                "en-US",
-                { day: "2-digit", month: "short", year: "numeric" }
+            <p className="text-gray-600">Total Tweets Analyzed</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+            <h2 className="text-3xl font-bold text-red-600 mb-2">
+              {(stats.totalQuotes / stats.uniqueQuotedTweets).toFixed(2)}{" "}
+            </h2>
+            <p className="text-gray-600">Average Self-Quotes per Tweet</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+            <h2 className="text-3xl font-bold text-yellow-600 mb-2">
+              {((stats.uniqueQuotedTweets / stats.totalTweets) * 100).toFixed(
+                2
               )}
-            </p>
+              %
+            </h2>
+            <p className="text-gray-600">% of Tweets Self-Quoted</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-6 text-center">
+            <h2 className="text-3xl font-bold text-orange-600 mb-2">
+              {new Date(stats.uploadStats?.[0]?.endDate).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                }
+              )}
+            </h2>
+            <p className="text-gray-600">Latest Tweet Export</p>
           </div>
         </div>
 
@@ -145,49 +160,6 @@ function Home() {
               self-quotes over time
             </p>
           </Link>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Key Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="font-medium mb-2">Quote Frequency</h3>
-              <p className="text-gray-600">
-                Average quotes per tweet:{" "}
-                {(stats.totalQuotes / stats.uniqueQuotedTweets).toFixed(2)}
-              </p>
-              <p className="text-gray-600">
-                Percentage of tweets quoted:{" "}
-                {((stats.uniqueQuotedTweets / stats.totalTweets) * 100).toFixed(
-                  2
-                )}
-                %
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium mb-2">Data Coverage</h3>
-              <p className="text-gray-600">
-                From{" "}
-                {new Date(stats.uploadStats?.[0]?.startDate).toLocaleDateString(
-                  "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )}{" "}
-                to{" "}
-                {new Date(stats.uploadStats?.[0]?.endDate).toLocaleDateString(
-                  "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )}
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="bg-gray-50 p-6 rounded-lg">
