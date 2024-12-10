@@ -4,22 +4,25 @@ def extract_tweets_with_visakanv_urls(tweets_array):
     # Initialize an empty list to store matching tweets
     matching_tweets = []
     
+    # First, flatten the array since tweets_array is an array of arrays
+    flattened_tweets = []
+    for tweet_array in tweets_array:
+        if isinstance(tweet_array, list):
+            flattened_tweets.extend(tweet_array)
+        else:
+            flattened_tweets.append(tweet_array)
+    
     # Iterate through each tweet object in the flattened array
-    for tweet_obj in tweets_array:
-        if 'tweet' not in tweet_obj:
-            continue
-            
-        tweet_data = tweet_obj['tweet']
-        
+    for tweet_obj in flattened_tweets:
         # Check if entities and urls exist
-        if 'entities' in tweet_data and 'urls' in tweet_data['entities']:
-            urls = tweet_data['entities']['urls']
+        if 'entities' in tweet_obj and 'urls' in tweet_obj['entities']:
+            urls = tweet_obj['entities']['urls']
             
             # Check if any URL contains 'visakanv'
             for url in urls:
                 if 'expanded_url' in url and 'visakanv' in url['expanded_url']:
                     # Add the entire tweet object to matching_tweets
-                    matching_tweets.append(tweet_data)
+                    matching_tweets.append(tweet_obj)
                     break  # Break once we find a matching URL in this tweet
     
     return matching_tweets
@@ -31,14 +34,9 @@ def main():
         with open('tweets.json', 'r', encoding='utf-8') as file:
             json_data = json.load(file)
         
-        # Flatten the nested array structure
-        flattened_tweets = []
-        for tweet_array in json_data:
-            flattened_tweets.extend(tweet_array)
-        
         # Extract matching tweets
         print("Extracting tweets with URLs containing 'visakanv'...", flush=True)
-        matching_tweets = extract_tweets_with_visakanv_urls(flattened_tweets)
+        matching_tweets = extract_tweets_with_visakanv_urls(json_data)
         
         # Save the results to a new JSON file
         with open('selfQuotedTweets.json', 'w', encoding='utf-8') as file:
