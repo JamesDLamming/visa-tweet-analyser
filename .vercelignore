@@ -1,0 +1,18 @@
+# Ignore large JSON files
+account.json
+countSelfQuotes.json
+not_found_tweets.json
+profile.json
+selfQuotedTweets.json
+totalTweetLength.json
+tweet_results.json
+tweets.json
+upload.json
+visakanv.json
+!package.json
+!package-lock.json
+!vercel.json
+
+# Python cache
+__pycache__/
+*.pyc

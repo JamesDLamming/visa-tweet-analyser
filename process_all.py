@@ -22,6 +22,9 @@ def check_file_exists(filename):
 def main():
     print("Starting Twitter data processing pipeline...")
     
+    # Create data directory if it doesn't exist
+    os.makedirs('public', exist_ok=True)
+    
     # Step 1: Download the data
     run_step("Download", "download.py")
     check_file_exists("visakanv.json")
@@ -41,6 +44,28 @@ def main():
     # Step 5: Extract tweet data
     run_step("Extract Tweet Data", "tweetData.py")
     check_file_exists("tweet_results.json")
+    # Move JSON files to public directory
+    json_files = [
+        'tweets.json',
+        'selfQuotedTweets.json',
+        'countSelfQuotes.json',
+        'tweet_results.json',
+        'totalTweetLength.json',
+        'upload.json',
+        'account.json',
+        'profile.json',
+        'not_found_tweets.json'
+
+    ]
+    
+    print("\nMoving JSON files to public directory...")
+    for file in json_files:
+        try:
+            if os.path.exists(file):
+                os.rename(file, f'public/{file}')
+                print(f"✓ Moved {file} to public/")
+        except Exception as e:
+            print(f"! Error moving {file}: {str(e)}")
     
     print("\n✨ All processing completed successfully! ✨")
     print("\nOutput files created:")

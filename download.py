@@ -1,7 +1,5 @@
 import requests
-import json
 from tqdm import tqdm
-import os
 
 username = 'visakanv'
 url = f'https://fabxmporizzqflnftavs.supabase.co/storage/v1/object/public/archives/visakanv/archive.json'

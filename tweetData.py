@@ -1,4 +1,3 @@
-import os
 import json
 
 def load_json_file(filename):

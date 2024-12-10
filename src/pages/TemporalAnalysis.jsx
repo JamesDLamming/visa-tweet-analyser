@@ -39,8 +39,8 @@ function TemporalAnalysis() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/tweet_results.json").then((res) => res.json()),
-      fetch("/upload.json").then((res) => res.json()),
+      fetch("/public/tweet_results.json").then((res) => res.json()),
+      fetch("/public/upload.json").then((res) => res.json()),
     ])
       .then(([data, uploadData]) => {
         const uploadDate = new Date(uploadData[0].endDate);

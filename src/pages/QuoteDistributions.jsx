@@ -58,9 +58,9 @@ function QuoteDistributions() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/tweet_results.json").then((res) => res.json()),
-      fetch("/upload.json").then((res) => res.json()),
-      fetch("/selfQuotedTweets.json").then((res) => res.json()),
+      fetch("/public/tweet_results.json").then((res) => res.json()),
+      fetch("/public/upload.json").then((res) => res.json()),
+      fetch("/public/selfQuotedTweets.json").then((res) => res.json()),
     ])
       .then(([tweetData, uploadData, quotesData]) => {
         const uploadDate = new Date(uploadData[0].endDate);

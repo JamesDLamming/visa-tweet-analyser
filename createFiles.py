@@ -76,6 +76,15 @@ def process_json_file(input_file='visakanv.json'):
             json.dump(total_tweets_length, f, ensure_ascii=False, indent=2)
         print(f"✓ Saved totalTweetLength.json with {total_tweets_length} tweets")
 
+    # Check if all files have been successfully created
+    required_files = ['tweets.json', 'account.json', 'profile.json', 'upload.json', 'totalTweetLength.json']
+    all_files_created = all(os.path.exists(file) for file in required_files)
+    
+    if all_files_created:
+        print("\nAll required files have been successfully created. Deleting the input file...")
+        os.remove(input_file)
+        print(f"✓ Deleted {input_file}")
+
     print("\nProcessing complete! ✨")
 
 if __name__ == "__main__":
