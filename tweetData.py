@@ -14,10 +14,11 @@ def extract_tweet_info():
     print("Creating tweet dictionary...", flush=True)
     tweets_dict = {}
     for tweet_list in tweets_data:
-        for tweet_obj in tweet_list:
-            if 'tweet' in tweet_obj:
-                tweet = tweet_obj['tweet']
+        if isinstance(tweet_list, list):
+            for tweet in tweet_list:
                 tweets_dict[tweet['id_str']] = tweet
+        else:
+            tweets_dict[tweet_list['id_str']] = tweet_list
 
     # Match counts with tweets
     print("Matching counts with tweets...", flush=True)
@@ -64,7 +65,6 @@ def extract_tweet_info():
         else:
             not_found_count += 1
             not_found_tweets.append({
-                
                 'tweet_id': tweet_id,
                 'count': count,
                 'tweet_text': 'Tweet not found',

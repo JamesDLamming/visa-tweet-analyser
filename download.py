@@ -7,7 +7,6 @@ url = f'https://fabxmporizzqflnftavs.supabase.co/storage/v1/object/public/archiv
 
 # Helper function to downnload the data and display a progress bar
 def downloadUserData(username):
-  output_filename = f'{username}.json'
   
   print("Downloading tweet data for:", username, flush=True)
   response = requests.get(url, stream=True)
