@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "python process_all.py && vite build"
+    "vercel-build": "python3 process_all.py && vite build"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.2.3",
