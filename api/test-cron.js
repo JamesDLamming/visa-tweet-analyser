@@ -70,8 +70,6 @@ async function testCronLogic() {
     const currentEndDate = new Date(uploadJson[0].endDate);
     const newEndDate = new Date(archiveData[0].archive_at);
 
-    console.log(currentEndDate);
-
     // Check if the end dates are different
     if (newEndDate > currentEndDate) {
       console.log(archiveData);
