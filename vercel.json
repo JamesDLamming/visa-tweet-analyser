@@ -1,5 +1,11 @@
 {
   "buildCommand": "npm run vercel-build",
   "installCommand": "npm install && python3 -m pip install -r requirements.txt",
-  "framework": "vite"
+  "framework": "vite",
+  "crons": [
+    {
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
