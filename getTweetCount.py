@@ -24,5 +24,25 @@ def get_total_tweets():
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
 
+def get_upload_dates():
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+    }
+    try:
+        response = requests.get(
+            f"{SUPABASE_URL}/rest/v1/archive_upload?account_id=eq.16884623&select=*",
+            headers=headers
+        )
+        response.raise_for_status()
+        dates = response.json()
+        print(f"Upload dates: {dates[0]['end_date']}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+
 if __name__ == "__main__":
     get_total_tweets()
+    get_upload_dates()
+
+
