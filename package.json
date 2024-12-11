@@ -11,6 +11,7 @@
     "vercel-build": "python3 process_all.py && vite build"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.709.0",
     "@chakra-ui/react": "^3.2.3",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
@@ -21,6 +22,7 @@
     "collections": "^5.1.13",
     "date-fns": "^4.1.0",
     "datetime": "^0.0.3",
+    "dotenv": "^16.4.7",
     "fas": "^0.3.6",
     "framer-motion": "^11.13.1",
     "json": "^11.0.0",

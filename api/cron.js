@@ -3,8 +3,55 @@ import { createClient } from "@supabase/supabase-js";
 import { promises as fs } from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const execAsync = promisify(exec);
+
+// Initialize AWS SES client
+const sesClient = new SESClient({
+  region: process.env.AWS_REGION, // e.g., "us-east-1"
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
+
+async function sendNotificationEmail(oldEndDate, newEndDate) {
+  const params = {
+    Source: process.env.AWS_SES_SENDER_EMAIL,
+    Destination: {
+      ToAddresses: ["james@jameslamming.com"],
+    },
+    Message: {
+      Subject: {
+        Data: "Visakanv tweet analyser - Data Update Notification",
+      },
+      Body: {
+        Html: {
+          Data: `
+            <h2>Visakanv tweet analyser - Data Update Notification</h2>
+            <p>Tweet data has been updated. Check it worked correctly</p>
+            <p><strong>Old End Date:</strong> ${oldEndDate}</p>
+            <p><strong>New End Date:</strong> ${newEndDate}</p>
+          `,
+        },
+        Text: {
+          Data: `Data has been updated!\nOld End Date: ${oldEndDate}\nNew End Date: ${newEndDate}`,
+        },
+      },
+    },
+  };
+
+  try {
+    await sesClient.send(new SendEmailCommand(params));
+    console.log("Email notification sent successfully");
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
+}
 
 const supabase = createClient(
   "https://fabxmporizzqflnftavs.supabase.co",
@@ -38,6 +85,8 @@ export default async function handler(req, res) {
     if (newEndDate > currentEndDate) {
       // Run the processing script
       await execAsync("python3 process_all.py");
+
+      await sendNotificationEmail(currentEndDate, newEndDate);
 
       return res.status(200).json({
         message: "Data updated and processing completed",
