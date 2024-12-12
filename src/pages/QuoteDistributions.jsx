@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
+import zoomPlugin from "chartjs-plugin-zoom";
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +22,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  zoomPlugin
 );
 
 function QuoteDistributions() {
@@ -38,6 +40,8 @@ function QuoteDistributions() {
   const [earliestTweetDate, setEarliestTweetDate] = useState(null);
   const [sortBy, setSortBy] = useState("quotes");
   const [sortDirection, setSortDirection] = useState("asc");
+  const chartRef = useRef(null);
+  const [isTweetSelectorExpanded, setIsTweetSelectorExpanded] = useState(false);
 
   const getTop100Tweets = (tweets, normalized) => {
     // First get the initial sorted tweets based on normalization
@@ -154,6 +158,29 @@ function QuoteDistributions() {
     }
   }, [showNormalized, sortBy]);
 
+  // // Add a resize event listener
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     if (window.innerWidth < 768) {
+  //       setIsTweetSelectorExpanded(true);
+  //     }
+  //     if (window.innerWidth >= 768) {
+  //       setIsTweetSelectorExpanded(false);
+  //     }
+  //   };
+
+  //   // Initial check
+  //   handleResize();
+
+  //   // Add event listener
+  //   window.addEventListener("resize", handleResize);
+
+  //   // Cleanup
+  //   return () => window.removeEventListener("resize", handleResize);
+  // }, []);
+
+  console.log(isTweetSelectorExpanded);
+
   if (loading) {
     return (
       <div className="container mx-auto flex flex-col items-center justify-center h-screen px-4">
@@ -218,6 +245,7 @@ function QuoteDistributions() {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -238,6 +266,32 @@ function QuoteDistributions() {
           label: (context) => {
             const value = context.parsed.y.toFixed(showNormalized ? 2 : 0);
             return `${getChartLabel()}: ${value}`;
+          },
+        },
+      },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x",
+          modifierKey: "ctrl",
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: "x",
+          drag: {
+            enabled: true,
+            backgroundColor: "rgba(59, 130, 246, 0.3)",
+          },
+        },
+        limits: {
+          x: {
+            min: earliestTweetDate?.getTime(),
+            max: uploadDate?.getTime(),
           },
         },
       },
@@ -331,42 +385,95 @@ function QuoteDistributions() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1 bg-white p-4 rounded-lg shadow overflow-auto max-h-[800px]">
-          <h2 className="text-xl font-semibold mb-4">
-            {showNormalized
-              ? "Top 100 Tweets (Quotes per Month)"
-              : "Top 100 Tweets (Total Quotes)"}
-          </h2>
-          <div className="space-x-2 ">
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-2 py-2 border rounded bg-white"
-            >
-              <option value="quotes">Sort by Quotes</option>
-              <option value="date">Sort by Date Created</option>
-            </select>
-            <button
-              onClick={() =>
-                setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-              }
-              className="px-3 py-2 border rounded hover:bg-gray-100"
-              title={
-                sortDirection === "asc" ? "Sort Descending" : "Sort Ascending"
-              }
-            >
-              {sortDirection === "asc" ? "↓" : "↑"}
-            </button>
+        <div
+          className="md:col-span-1 bg-white p-4 rounded-lg shadow max-h-[800px]"
+          id="top-100-tweets"
+        >
+          {/* Tweet List - Hidden on Mobile unless expanded */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">
+              {showNormalized
+                ? "Top 100 Tweets (Quotes per Month)"
+                : "Top 100 Tweets (Total Quotes)"}
+            </h2>
+            <div className="space-x-2">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-2 py-2 border rounded bg-white"
+              >
+                <option value="quotes">Sort by Quotes</option>
+                <option value="date">Sort by Date Created</option>
+              </select>
+              <button
+                onClick={() =>
+                  setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+                }
+                className="px-3 py-2 border rounded hover:bg-gray-100"
+                title={
+                  sortDirection === "asc" ? "Sort Descending" : "Sort Ascending"
+                }
+              >
+                {sortDirection === "asc" ? "↓" : "↑"}
+              </button>
+            </div>
+            <div className="my-2">
+              <button
+                onClick={() => setShowNormalized(!showNormalized)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                {showNormalized ? "Regular View" : "Normalize by Age"}
+              </button>
+            </div>
+            {/* Mobile Selected Tweet Display */}
+            <div className="md:hidden">
+              {selectedTweet && (
+                <div className="mb-4">
+                  <div
+                    className={`p-4 rounded border border-blue-200 bg-blue-50`}
+                  >
+                    <p className="text-sm text-gray-500 mb-1">
+                      {showNormalized
+                        ? `${selectedTweet.quotesPerMonth.toFixed(
+                            1
+                          )} quotes/month`
+                        : `${selectedTweet.count || 0} quotes`}
+                    </p>
+                    <p className="text-sm">{selectedTweet.tweet_text}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Created:{" "}
+                      {selectedTweet.created_at.toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() =>
+                      setIsTweetSelectorExpanded(!isTweetSelectorExpanded)
+                    }
+                    className="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg flex justify-between items-center"
+                  >
+                    <span>
+                      {isTweetSelectorExpanded
+                        ? "Hide All Tweets"
+                        : "Show All Tweets"}
+                    </span>
+                    <span className="text-xl">
+                      {isTweetSelectorExpanded ? "↑" : "↓"}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="my-2">
-            <button
-              onClick={() => setShowNormalized(!showNormalized)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              {showNormalized ? "Regular View" : "Normalize by Age"}
-            </button>
-          </div>
-          <div className="space-y-4">
+          <div
+            className={`space-y-4 mt-4 max-h-[400px] md:max-h-[620px] overflow-auto pr-2 -mr-2 ${
+              isTweetSelectorExpanded ? "" : "h-0"
+            }`}
+            id="tweet-selector-mobile"
+          >
             {topTweets
               .sort((a, b) => {
                 switch (sortBy) {
@@ -394,7 +501,64 @@ function QuoteDistributions() {
                       ? "bg-blue-50 border border-blue-200"
                       : "hover:bg-gray-50 border"
                   }`}
-                  onClick={() => setSelectedTweet(tweet)}
+                  onClick={() => {
+                    setSelectedTweet(tweet);
+                    setIsTweetSelectorExpanded(false);
+                  }}
+                >
+                  <p className="text-sm text-gray-500 mb-1">
+                    #{index + 1} •{" "}
+                    {showNormalized
+                      ? `${tweet.quotesPerMonth.toFixed(1)} quotes/month`
+                      : `${tweet.count || 0} quotes`}
+                  </p>
+                  <p className="text-sm">{tweet.tweet_text}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Created:{" "}
+                    {tweet.created_at.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              ))}
+          </div>
+          <div
+            className={`space-y-4 mt-4 max-h-[600px] md:max-h-[620px] overflow-auto pr-2 -mr-2 hidden md:block`}
+            id="tweet-selector"
+          >
+            {topTweets
+              .sort((a, b) => {
+                switch (sortBy) {
+                  case "date":
+                    return sortDirection === "asc"
+                      ? a.created_at - b.created_at
+                      : b.created_at - a.created_at;
+
+                  default: // 'quotes'
+                    if (showNormalized) {
+                      return sortDirection === "asc"
+                        ? b.quotesPerMonth - a.quotesPerMonth
+                        : a.quotesPerMonth - b.quotesPerMonth;
+                    }
+                    return sortDirection === "asc"
+                      ? b.count - a.count
+                      : a.count - b.count;
+                }
+              })
+              .map((tweet, index) => (
+                <div
+                  key={tweet.tweet_id}
+                  className={`p-4 rounded cursor-pointer transition-colors ${
+                    selectedTweet?.tweet_id === tweet.tweet_id
+                      ? "bg-blue-50 border border-blue-200"
+                      : "hover:bg-gray-50 border"
+                  }`}
+                  onClick={() => {
+                    setSelectedTweet(tweet);
+                    setIsTweetSelectorExpanded(false);
+                  }}
                 >
                   <p className="text-sm text-gray-500 mb-1">
                     #{index + 1} •{" "}
@@ -424,16 +588,8 @@ function QuoteDistributions() {
                   <h2 className="text-xl font-semibold mb-2">
                     Quote Distribution
                   </h2>
-                  <div className="space-x-2">
-                    <button
-                      onClick={() => setShowMonthly(!showMonthly)}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-                    >
-                      {showMonthly ? "Show Cumulative" : "Show Monthly"}
-                    </button>
-                  </div>
                 </div>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-gray-50 p-3 rounded">
                     <h3 className="text-sm font-medium text-gray-500">
                       Total Quotes
@@ -508,7 +664,32 @@ function QuoteDistributions() {
                   </div>
                 </div>
               </div>
-              <Line data={getChartData(selectedTweet)} options={chartOptions} />
+              <div className="h-[300px] md:h-[350px]">
+                <Line
+                  data={getChartData(selectedTweet)}
+                  options={chartOptions}
+                  ref={chartRef}
+                />
+              </div>
+              <div className="mt-2 text-center flex justify-center gap-4">
+                <button
+                  onClick={() => {
+                    const chart = chartRef.current;
+                    if (chart) {
+                      chart.resetZoom();
+                    }
+                  }}
+                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                >
+                  Reset Zoom
+                </button>
+                <button
+                  onClick={() => setShowMonthly(!showMonthly)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  {showMonthly ? "Show Cumulative" : "Show Monthly"}
+                </button>
+              </div>
               {selectedTweet && quoteData[selectedTweet.tweet_id] && (
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-4">

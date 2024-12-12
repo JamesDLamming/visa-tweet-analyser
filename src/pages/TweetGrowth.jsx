@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
+import zoomPlugin from "chartjs-plugin-zoom";
 
 ChartJS.register(
   CategoryScale,
@@ -21,7 +22,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  zoomPlugin
 );
 
 function TweetGrowth() {
@@ -29,6 +31,7 @@ function TweetGrowth() {
   const [tweetData, setTweetData] = useState([]);
   const [uploadDate, setUploadDate] = useState(null);
   const [showCumulative, setShowCumulative] = useState(true);
+  const chartRef = useRef(null);
 
   useEffect(() => {
     Promise.all([
@@ -198,6 +201,32 @@ function TweetGrowth() {
           },
         },
       },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x",
+          modifierKey: "ctrl",
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: "x",
+          drag: {
+            enabled: true,
+            backgroundColor: "rgba(59, 130, 246, 0.3)",
+          },
+        },
+        limits: {
+          x: {
+            min: tweetData[0]?.date.getTime(),
+            max: uploadDate?.getTime(),
+          },
+        },
+      },
     },
     scales: {
       x: {
@@ -301,7 +330,20 @@ function TweetGrowth() {
         </div>
       </div>
       <div className="bg-white p-4 rounded-lg shadow">
-        <Line data={chartData} options={chartOptions} />
+        <Line data={chartData} options={chartOptions} ref={chartRef} />
+        <div className="mt-2 text-center">
+          <button
+            onClick={() => {
+              const chart = chartRef.current;
+              if (chart) {
+                chart.resetZoom();
+              }
+            }}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+          >
+            Reset Zoom
+          </button>
+        </div>
       </div>
     </div>
   );

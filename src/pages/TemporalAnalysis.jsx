@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,6 +12,7 @@ import {
 import { Bar } from "react-chartjs-2";
 import Papa from "papaparse";
 import "chartjs-adapter-date-fns";
+import zoomPlugin from "chartjs-plugin-zoom";
 
 // Register ChartJS components
 ChartJS.register(
@@ -21,7 +22,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  zoomPlugin
 );
 
 function TemporalAnalysis() {
@@ -36,7 +38,7 @@ function TemporalAnalysis() {
   const [startDate, setStartDate] = useState(null);
   const [tweetSortBy, setTweetSortBy] = useState("date");
   const [tweetSortDirection, setTweetSortDirection] = useState("asc");
-  const [isTableExpanded, setIsTableExpanded] = useState(true);
+  const chartRef = useRef(null);
 
   useEffect(() => {
     Promise.all([
@@ -245,6 +247,45 @@ function TemporalAnalysis() {
           },
         },
       },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x",
+          modifierKey: "ctrl", // Only pan when ctrl is pressed (on desktop)
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: "x",
+          drag: {
+            enabled: true,
+            backgroundColor: "rgba(59, 130, 246, 0.3)", // Light blue
+          },
+        },
+        limits: {
+          x: {
+            min:
+              viewMode === "year"
+                ? new Date(startDate.getFullYear(), 0).getTime()
+                : new Date(
+                    startDate.getFullYear(),
+                    startDate.getMonth()
+                  ).getTime(),
+            max:
+              viewMode === "year"
+                ? new Date(uploadDate.getFullYear(), 11, 31).getTime()
+                : new Date(
+                    uploadDate.getFullYear(),
+                    uploadDate.getMonth() + 1,
+                    0
+                  ).getTime(),
+          },
+        },
+      },
     },
     scales: {
       y: {
@@ -376,7 +417,20 @@ function TemporalAnalysis() {
       </div>
 
       <div className="mb-6 bg-white p-4 rounded-lg shadow">
-        <Bar data={chartData} options={chartOptions} />
+        <Bar ref={chartRef} data={chartData} options={chartOptions} />
+        <div className="mt-2 text-center">
+          <button
+            onClick={() => {
+              const chart = chartRef.current;
+              if (chart) {
+                chart.resetZoom();
+              }
+            }}
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+          >
+            Reset Zoom
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -385,46 +439,11 @@ function TemporalAnalysis() {
             <h2 className="text-xl font-semibold">
               {viewMode === "year" ? "Yearly" : "Monthly"} Breakdown
             </h2>
-            <button
-              onClick={() => setIsTableExpanded(!isTableExpanded)}
-              className="text-blue-500 hover:text-blue-600 flex items-center"
-            >
-              {isTableExpanded ? (
-                <>
-                  <span>Collapse</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-1 transition-transform duration-200"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </>
-              ) : (
-                <>
-                  <span>Expand</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 ml-1 transition-transform duration-200"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </>
-              )}
-            </button>
           </div>
-          <div className={`overflow-x-hidden`}>
+          <div
+            className={`overflow-x-hidden transition-[max-height] duration-500 ease-in-out h-[300px] md:h-[500px]
+              `}
+          >
             <table className="min-w-full">
               <thead className="sticky top-0 bg-white">
                 <tr>
@@ -437,29 +456,20 @@ function TemporalAnalysis() {
               <tbody>
                 {Object.entries(timeData)
                   .sort(([a], [b]) => a.localeCompare(b))
-                  .slice(0, isTableExpanded ? undefined : 5) // Show only first 5 rows when collapsed
                   .map(([time, count]) => (
                     <tr
                       key={time}
-                      className={`hover:bg-gray-50 cursor-pointer transition-all duration-200 ${
+                      className={`hover:bg-gray-50 cursor-pointer transition-all duration-500 ${
                         selectedPeriod === time ? "bg-blue-50" : ""
                       }`}
                       onClick={() => handlePeriodClick(time)}
                     >
-                      <td className="border px-4 py-2">{formatLabel(time)}</td>
-                      <td className="border px-4 py-2">{count}</td>
+                      <td className={`border px-4 py-2`}>
+                        {formatLabel(time)}
+                      </td>
+                      <td className={`border px-4 py-2`}>{count}</td>
                     </tr>
                   ))}
-                {!isTableExpanded && Object.keys(timeData).length > 5 && (
-                  <tr className="transition-opacity duration-200 ease-in-out">
-                    <td
-                      colSpan="2"
-                      className="px-4 py-2 text-gray-500 text-center border"
-                    >
-                      {Object.keys(timeData).length - 5} more rows...
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
@@ -500,7 +510,7 @@ function TemporalAnalysis() {
               </div>
             )}
           </div>
-          <div className="space-y-4 max-h-[600px] overflow-y-auto">
+          <div className="space-y-4 min-h-[200px] max-h-[500px] md:h-[500px] overflow-y-auto">
             {filteredTweets
               .sort((a, b) => {
                 switch (tweetSortBy) {
