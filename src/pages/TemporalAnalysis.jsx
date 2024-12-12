@@ -36,6 +36,7 @@ function TemporalAnalysis() {
   const [startDate, setStartDate] = useState(null);
   const [tweetSortBy, setTweetSortBy] = useState("date");
   const [tweetSortDirection, setTweetSortDirection] = useState("asc");
+  const [isTableExpanded, setIsTableExpanded] = useState(true);
 
   useEffect(() => {
     Promise.all([
@@ -285,13 +286,66 @@ function TemporalAnalysis() {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          {showNormalized
-            ? "Top 1,000 Tweets (Normalized by Age)"
-            : "Top 1,000 Quoted Tweets"}
-        </h1>
-        <div className="space-x-2">
+      <div className="md:hidden">
+        <div className="md:flex md:justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold mb-2 md:mb-0">
+            {showNormalized
+              ? "Top 1,000 Tweets (Normalized by Age)"
+              : "Top 1,000 Quoted Tweets"}
+          </h1>
+          <div className="space-x-2 space-y-2">
+            <button
+              onClick={() => handleViewChange("year")}
+              className={`px-4 py-2 rounded ${
+                viewMode === "year"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              Yearly
+            </button>
+            <button
+              onClick={() => handleViewChange("month")}
+              className={`px-4 py-2 rounded ${
+                viewMode === "month"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setShowNormalized(!showNormalized)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              {showNormalized ? "Regular View" : "Normalize by Age"}
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={downloadCSV}
+          className="px-4 py-2 mb-4 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Export CSV
+        </button>
+      </div>
+
+      <div className="hidden md:block">
+        <div className="md:flex md:justify-between items-center align-middle mb-4">
+          <h1 className="text-2xl font-bold mb-2 md:mb-0">
+            {showNormalized
+              ? "Top 1,000 Tweets (Normalized by Age)"
+              : "Top 1,000 Quoted Tweets"}
+          </h1>
+          <button
+            onClick={downloadCSV}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Export CSV
+          </button>
+        </div>
+
+        <div className="space-x-2 mb-4">
           <button
             onClick={() => handleViewChange("year")}
             className={`px-4 py-2 rounded ${
@@ -318,12 +372,6 @@ function TemporalAnalysis() {
           >
             {showNormalized ? "Regular View" : "Normalize by Age"}
           </button>
-          <button
-            onClick={downloadCSV}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-          >
-            Export CSV
-          </button>
         </div>
       </div>
 
@@ -332,33 +380,89 @@ function TemporalAnalysis() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr>
-                <th className="px-4 py-2 bg-gray-50">
-                  {viewMode === "year" ? "Year" : "Month"}
-                </th>
-                <th className="px-4 py-2 bg-gray-50">Number of Tweets</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.entries(timeData)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([time, count]) => (
-                  <tr
-                    key={time}
-                    className={`hover:bg-gray-50 cursor-pointer ${
-                      selectedPeriod === time ? "bg-blue-50" : ""
-                    }`}
-                    onClick={() => handlePeriodClick(time)}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">
+              {viewMode === "year" ? "Yearly" : "Monthly"} Breakdown
+            </h2>
+            <button
+              onClick={() => setIsTableExpanded(!isTableExpanded)}
+              className="text-blue-500 hover:text-blue-600 flex items-center"
+            >
+              {isTableExpanded ? (
+                <>
+                  <span>Collapse</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 ml-1 transition-transform duration-200"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
                   >
-                    <td className="border px-4 py-2">{formatLabel(time)}</td>
-                    <td className="border px-4 py-2">{count}</td>
+                    <path
+                      fillRule="evenodd"
+                      d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </>
+              ) : (
+                <>
+                  <span>Expand</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 ml-1 transition-transform duration-200"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+          <div className={`overflow-x-hidden`}>
+            <table className="min-w-full">
+              <thead className="sticky top-0 bg-white">
+                <tr>
+                  <th className="px-4 py-2 bg-gray-50">
+                    {viewMode === "year" ? "Year" : "Month"}
+                  </th>
+                  <th className="px-4 py-2 bg-gray-50">Number of Tweets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(timeData)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .slice(0, isTableExpanded ? undefined : 5) // Show only first 5 rows when collapsed
+                  .map(([time, count]) => (
+                    <tr
+                      key={time}
+                      className={`hover:bg-gray-50 cursor-pointer transition-all duration-200 ${
+                        selectedPeriod === time ? "bg-blue-50" : ""
+                      }`}
+                      onClick={() => handlePeriodClick(time)}
+                    >
+                      <td className="border px-4 py-2">{formatLabel(time)}</td>
+                      <td className="border px-4 py-2">{count}</td>
+                    </tr>
+                  ))}
+                {!isTableExpanded && Object.keys(timeData).length > 5 && (
+                  <tr className="transition-opacity duration-200 ease-in-out">
+                    <td
+                      colSpan="2"
+                      className="px-4 py-2 text-gray-500 text-center border"
+                    >
+                      {Object.keys(timeData).length - 5} more rows...
+                    </td>
                   </tr>
-                ))}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="bg-white p-4 rounded-lg shadow">

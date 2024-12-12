@@ -78,8 +78,8 @@ function TopTweets() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl">
+      <div className="md:flex md:justify-between items-center mb-6">
+        <h1 className="text-2xl mb-4 md:mb-0">
           {showNormalized
             ? "Top 200 Self-Quoted Tweets (Normalized by Age)"
             : "Top 200 Self-Quoted Tweets"}
