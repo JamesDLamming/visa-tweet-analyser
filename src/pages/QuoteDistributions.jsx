@@ -158,28 +158,7 @@ function QuoteDistributions() {
     }
   }, [showNormalized, sortBy]);
 
-  // // Add a resize event listener
-  // useEffect(() => {
-  //   const handleResize = () => {
-  //     if (window.innerWidth < 768) {
-  //       setIsTweetSelectorExpanded(true);
-  //     }
-  //     if (window.innerWidth >= 768) {
-  //       setIsTweetSelectorExpanded(false);
-  //     }
-  //   };
 
-  //   // Initial check
-  //   handleResize();
-
-  //   // Add event listener
-  //   window.addEventListener("resize", handleResize);
-
-  //   // Cleanup
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, []);
-
-  console.log(isTweetSelectorExpanded);
 
   if (loading) {
     return (
@@ -685,7 +664,7 @@ function QuoteDistributions() {
                 </button>
                 <button
                   onClick={() => setShowMonthly(!showMonthly)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
                 >
                   {showMonthly ? "Show Cumulative" : "Show Monthly"}
                 </button>

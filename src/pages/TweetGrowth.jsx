@@ -171,6 +171,7 @@ function TweetGrowth() {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false,
     interaction: {
       mode: "index",
       intersect: false,
@@ -297,12 +298,6 @@ function TweetGrowth() {
             </p>
           )}
         </div>
-        <button
-          onClick={() => setShowCumulative(!showCumulative)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Show {showCumulative ? "Monthly" : "Cumulative"} View
-        </button>
       </div>
 
       <div className="mb-6 bg-white p-4 rounded-lg shadow">
@@ -330,8 +325,10 @@ function TweetGrowth() {
         </div>
       </div>
       <div className="bg-white p-4 rounded-lg shadow">
-        <Line data={chartData} options={chartOptions} ref={chartRef} />
-        <div className="mt-2 text-center">
+        <div className="h-[300px] md:h=[350px]">
+          <Line data={chartData} options={chartOptions} ref={chartRef} />
+        </div>
+        <div className="mt-2 text-center flex justify-center gap-4">
           <button
             onClick={() => {
               const chart = chartRef.current;
@@ -342,6 +339,12 @@ function TweetGrowth() {
             className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
           >
             Reset Zoom
+          </button>
+          <button
+            onClick={() => setShowCumulative(!showCumulative)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+          >
+            Show {showCumulative ? "Monthly" : "Cumulative"} View
           </button>
         </div>
       </div>
