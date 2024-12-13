@@ -72,6 +72,7 @@ const exportQuotesToCSV = (tweet, quotes) => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 function QuoteDistributions() {
@@ -718,17 +719,20 @@ function QuoteDistributions() {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Quoting Tweets</h3>
                     <div className="flex gap-2">
-                      <button
-                        onClick={() =>
-                          exportQuotesToCSV(
-                            selectedTweet,
-                            quoteData[selectedTweet.tweet_id]
-                          )
-                        }
-                        className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
-                      >
-                        Export CSV
-                      </button>
+                      {quoteData[selectedTweet.tweet_id] &&
+                        quoteData[selectedTweet.tweet_id].length > 0 && (
+                          <button
+                            onClick={() =>
+                              exportQuotesToCSV(
+                                selectedTweet,
+                                quoteData[selectedTweet.tweet_id]
+                              )
+                            }
+                            className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
+                          >
+                            Export CSV
+                          </button>
+                        )}
                       <button
                         onClick={toggleAllGroups}
                         className="text-sm text-blue-500 hover:text-blue-600"

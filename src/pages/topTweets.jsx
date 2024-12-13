@@ -57,6 +57,53 @@ function TopTweets() {
       });
   }, []);
 
+  const exportTweetsToCSV = (displayTweets) => {
+    if (!displayTweets || displayTweets.length === 0) return;
+
+    const headers = [
+      "tweet_id",
+      "quote_count",
+      "tweet_text",
+      "favorite_count",
+      "retweet_count",
+      "in_reply_to_screen_name",
+      "created_at",
+      "URL",
+    ];
+
+    const sortedTweets = [...displayTweets].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
+
+    const rows = sortedTweets.map((tweet) => {
+      return [
+        tweet.tweet_id,
+        tweet.count,
+        tweet.tweet_text,
+        tweet.favorite_count,
+        tweet.retweet_count,
+        tweet.in_reply_to_screen_name,
+        tweet.created_at,
+        `https://twitter.com/visakanv/status/${tweet.tweet_id}`,
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "visa-quotes.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto flex flex-col items-center justify-center h-screen px-4">
@@ -84,12 +131,22 @@ function TopTweets() {
             ? "Top 200 Self-Quoted Tweets (Normalized by Age)"
             : "Top 200 Self-Quoted Tweets"}
         </h1>
-        <button
-          onClick={() => setShowNormalized(!showNormalized)}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          {showNormalized ? "Regular View" : "Normalize by Age"}
-        </button>
+        <div className="flex gap-2">
+          {displayTweets && displayTweets.length > 0 && (
+            <button
+              onClick={() => exportTweetsToCSV(displayTweets)}
+              className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
+            >
+              Export CSV
+            </button>
+          )}
+          <button
+            onClick={() => setShowNormalized(!showNormalized)}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            {showNormalized ? "Regular View" : "Normalize by Age"}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-8">
