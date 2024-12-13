@@ -158,8 +158,6 @@ function QuoteDistributions() {
     }
   }, [showNormalized, sortBy]);
 
-
-
   if (loading) {
     return (
       <div className="container mx-auto flex flex-col items-center justify-center h-screen px-4">
@@ -435,9 +433,7 @@ function QuoteDistributions() {
                     className="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg flex justify-between items-center"
                   >
                     <span>
-                      {isTweetSelectorExpanded
-                        ? "Hide All Tweets"
-                        : "Show All Tweets"}
+                      {isTweetSelectorExpanded ? "Hide Tweets" : "Select Tweet"}
                     </span>
                     <span className="text-xl">
                       {isTweetSelectorExpanded ? "↑" : "↓"}

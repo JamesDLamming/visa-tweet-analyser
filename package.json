@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "python3 process_all.py && vite build"
+    "vercel-build": "python3 process_all.py && vite build",
+    "server": "node server.js",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.709.0",
@@ -21,9 +23,11 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "chartjs-plugin-zoom": "^2.2.0",
     "collections": "^5.1.13",
+    "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "datetime": "^0.0.3",
     "dotenv": "^16.4.7",
+    "express": "^4.21.2",
     "fas": "^0.3.6",
     "framer-motion": "^11.13.1",
     "json": "^11.0.0",
@@ -47,6 +51,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
     "eslint": "^9.15.0",
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",

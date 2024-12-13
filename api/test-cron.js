@@ -53,7 +53,11 @@ async function sendNotificationEmail(oldEndDate, newEndDate) {
   }
 }
 
-async function testCronLogic() {
+export async function testCronLogic(req, res) {
+  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   try {
     const { data: archiveData, error } = await supabase
       .from("archive_upload")
@@ -69,6 +73,8 @@ async function testCronLogic() {
 
     const currentEndDate = new Date(uploadJson[0].endDate);
     const newEndDate = new Date(archiveData[0].archive_at);
+
+    await sendNotificationEmail(currentEndDate, newEndDate);
 
     // Check if the end dates are different
     if (newEndDate > currentEndDate) {
