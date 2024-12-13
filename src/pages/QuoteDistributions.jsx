@@ -408,6 +408,32 @@ function QuoteDistributions() {
     return sortedTweets.findIndex((t) => t.tweet_id === tweetId) + 1;
   };
 
+  // When selecting a new tweet, we need to update collapsedGroups based on collapseAll
+  const handleTweetSelection = (tweet) => {
+    setSelectedTweet(tweet);
+    setIsTweetSelectorExpanded(false);
+
+    // If collapseAll is true, collapse all groups for the new tweet
+    if (collapseAll) {
+      const newCollapsedGroups = new Set(
+        Object.keys(
+          (quoteData[tweet.tweet_id] || []).reduce((acc, quote) => {
+            const monthsAfter = getMonthsSince(
+              tweet.created_at,
+              quote.created_at
+            );
+            acc[monthsAfter] = true;
+            return acc;
+          }, {})
+        )
+      );
+      setCollapsedGroups(newCollapsedGroups);
+    } else {
+      // If not collapsed, clear the set
+      setCollapsedGroups(new Set());
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="mb-6">
@@ -425,7 +451,7 @@ function QuoteDistributions() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
-          className="md:col-span-1 bg-white p-4 rounded-lg shadow max-h-[800px]"
+          className="md:col-span-1 bg-white p-4 rounded-lg shadow max-h-fit"
           id="top-100-tweets"
         >
           {/* Tweet List - Hidden on Mobile unless expanded */}
@@ -538,10 +564,7 @@ function QuoteDistributions() {
                       ? "bg-blue-50 border border-blue-200"
                       : "hover:bg-gray-50 border"
                   }`}
-                  onClick={() => {
-                    setSelectedTweet(tweet);
-                    setIsTweetSelectorExpanded(false);
-                  }}
+                  onClick={() => handleTweetSelection(tweet)}
                 >
                   <p className="text-sm text-gray-500 mb-1">
                     #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
@@ -562,7 +585,7 @@ function QuoteDistributions() {
               ))}
           </div>
           <div
-            className={`space-y-4 mt-4 max-h-[600px] md:max-h-[620px] overflow-auto pr-2 -mr-2 hidden md:block`}
+            className={`space-y-4 mt-4 max-h-[600px] md:max-h-[800px] overflow-auto pr-2 -mr-2 hidden md:block`}
             id="tweet-selector"
           >
             {topTweets
@@ -590,12 +613,9 @@ function QuoteDistributions() {
                   className={`p-4 rounded cursor-pointer transition-colors ${
                     selectedTweet?.tweet_id === tweet.tweet_id
                       ? "bg-blue-50 border border-blue-200"
-                      : "hover:bg-gray-50 border"
+                      : "bg-gray-50 hover:bg-gray-100 border"
                   }`}
-                  onClick={() => {
-                    setSelectedTweet(tweet);
-                    setIsTweetSelectorExpanded(false);
-                  }}
+                  onClick={() => handleTweetSelection(tweet)}
                 >
                   <p className="text-sm text-gray-500 mb-1">
                     #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
