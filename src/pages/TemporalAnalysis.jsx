@@ -530,10 +530,18 @@ function TemporalAnalysis() {
                 <div key={tweet.tweet_id} className="border-b pb-4">
                   <p className="text-sm text-gray-500 mb-1">
                     {showNormalized
-                      ? `${tweet.count} quotes (${tweet.quotesPerMonth.toFixed(
+                      ? `${tweet.count} quotes (#${
+                          tweets.findIndex(
+                            (t) => t.tweet_id === tweet.tweet_id
+                          ) + 1
+                        } of ${tweets.length}) (${tweet.quotesPerMonth.toFixed(
                           1
                         )} per month)`
-                      : `Quoted ${tweet.count} times`}{" "}
+                      : `Quoted ${tweet.count} times (#${
+                          tweets.findIndex(
+                            (t) => t.tweet_id === tweet.tweet_id
+                          ) + 1
+                        } of ${tweets.length})`}{" "}
                     • Created on{" "}
                     {new Date(tweet.created_at).toLocaleDateString("en-US", {
                       day: "2-digit",

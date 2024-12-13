@@ -395,6 +395,19 @@ function QuoteDistributions() {
     }
   };
 
+  // Create a function to get the quote-based rank (add this before the return statement)
+  const getQuoteBasedRank = (tweetId) => {
+    // Sort tweets by quotes (either normalized or total)
+    const sortedTweets = [...topTweets].sort((a, b) => {
+      if (showNormalized) {
+        return b.quotesPerMonth - a.quotesPerMonth;
+      }
+      return b.count - a.count;
+    });
+
+    return sortedTweets.findIndex((t) => t.tweet_id === tweetId) + 1;
+  };
+
   return (
     <div className="p-4">
       <div className="mb-6">
@@ -531,7 +544,7 @@ function QuoteDistributions() {
                   }}
                 >
                   <p className="text-sm text-gray-500 mb-1">
-                    #{index + 1} •{" "}
+                    #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
                     {showNormalized
                       ? `${tweet.quotesPerMonth.toFixed(1)} quotes/month`
                       : `${tweet.count || 0} quotes`}
@@ -585,7 +598,7 @@ function QuoteDistributions() {
                   }}
                 >
                   <p className="text-sm text-gray-500 mb-1">
-                    #{index + 1} •{" "}
+                    #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
                     {showNormalized
                       ? `${tweet.quotesPerMonth.toFixed(1)} quotes/month`
                       : `${tweet.count || 0} quotes`}
