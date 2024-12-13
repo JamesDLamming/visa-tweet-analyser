@@ -26,6 +26,54 @@ ChartJS.register(
   zoomPlugin
 );
 
+const exportQuotesToCSV = (tweet, quotes) => {
+  if (!quotes || quotes.length === 0) return;
+
+  // Prepare CSV headers and data
+  const headers = [
+    "Quote Tweet ID",
+    "Quote Text",
+    "Created At",
+    "Likes",
+    "Retweets",
+    "In Reply To",
+    "Quote Tweet URL",
+  ];
+
+  // Sort quotes by creation date (earliest to latest)
+  const sortedQuotes = [...quotes].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
+
+  const rows = sortedQuotes.map((quote) => {
+    return [
+      quote.tweet_id,
+      `"${quote.text.replace(/"/g, '""')}"`, // Escape quotes in text
+      quote.created_at.toISOString(),
+      quote.favorite_count,
+      quote.retweet_count,
+      quote.in_reply_to || "",
+      `https://twitter.com/visakanv/status/${quote.tweet_id}`,
+    ];
+  });
+
+  // Combine headers and rows
+  const csvContent = [
+    headers.join(","),
+    ...rows.map((row) => row.join(",")),
+  ].join("\n");
+
+  // Create and trigger download
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `quotes_for_tweet_${tweet.tweet_id}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 function QuoteDistributions() {
   const [loading, setLoading] = useState(true);
   const [topTweets, setTopTweets] = useState([]);
@@ -669,12 +717,25 @@ function QuoteDistributions() {
                 <div className="mt-6">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-semibold">Quoting Tweets</h3>
-                    <button
-                      onClick={toggleAllGroups}
-                      className="text-sm text-blue-500 hover:text-blue-600"
-                    >
-                      {collapseAll ? "Expand All" : "Collapse All"}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() =>
+                          exportQuotesToCSV(
+                            selectedTweet,
+                            quoteData[selectedTweet.tweet_id]
+                          )
+                        }
+                        className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
+                      >
+                        Export CSV
+                      </button>
+                      <button
+                        onClick={toggleAllGroups}
+                        className="text-sm text-blue-500 hover:text-blue-600"
+                      >
+                        {collapseAll ? "Expand All" : "Collapse All"}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-4 max-h-[400px] overflow-y-auto">
                     {Object.entries(
