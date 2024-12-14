@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "python3 -m pip install -r requirements.txt && npm run process-data && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "vercel-build": "python3 process_all.py && vite build",
     "server": "node server.js",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\""
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
+    "process-data": "python3 process_all.py"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.709.0",

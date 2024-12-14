@@ -77,7 +77,6 @@ export async function handler(req, res) {
 
     // Read the current upload.json file
     const uploadJson = JSON.parse(await fs.readFile("upload.json", "utf-8"));
-
     const currentEndDate = new Date(uploadJson[0].endDate);
     const newEndDate = new Date(archiveData[0].archive_at);
 
@@ -85,16 +84,29 @@ export async function handler(req, res) {
 
     // Check if the end dates are different
     if (newEndDate > currentEndDate) {
-      // Run the processing script
-      await execAsync("python3 process_all.py");
+      try {
+        const lockFile = "/tmp/process_all.lock";
+        await fs.writeFile(lockFile, Date.now().toString());
 
-      await sendNotificationEmail(currentEndDate, newEndDate);
+        await execAsync("npm run process-data");
 
-      return res.status(200).json({
-        message: "Data updated and processing completed",
-        oldEndDate: currentEndDate,
-        newEndDate: newEndDate,
-      });
+        await fs.unlink(lockFile);
+        await sendNotificationEmail(currentEndDate, newEndDate);
+
+        return res.status(200).json({
+          message: "Data updated and processing completed",
+          oldEndDate: currentEndDate,
+          newEndDate: newEndDate,
+        });
+      } catch (processError) {
+        console.error("Processing error:", processError);
+        try {
+          await fs.unlink("/tmp/process_all.lock");
+        } catch {
+          // Ignore if file doesn't exist
+        }
+        throw processError;
+      }
     }
 
     return res.status(200).json({

@@ -1,6 +1,5 @@
 {
-  "buildCommand": "npm run vercel-build",
-  "installCommand": "npm install && python3 -m pip install -r requirements.txt",
+  "buildCommand": "npm run build",
   "framework": "vite",
   "crons": [
     {
