@@ -11,6 +11,7 @@ def process_json_file(input_file='visakanv.json'):
     account_data = []
     profile_data = []
     upload_data = []
+    invalid_lines = []  # New list to store invalid JSON lines
 
     print("Reading and processing JSON file...", flush=True)
     # Create progress bar based on file size
@@ -19,8 +20,10 @@ def process_json_file(input_file='visakanv.json'):
     
     # Process the file line by line
     current_pos = 0
+    line_number = 0  # Track line numbers
     with open(input_file, 'r', encoding='utf-8') as f:
         for line in f:
+            line_number += 1
             # Update progress bar
             current_pos += len(line.encode('utf-8'))
             pbar.update(len(line.encode('utf-8')))
@@ -39,10 +42,24 @@ def process_json_file(input_file='visakanv.json'):
                     profile_data.append(data['profile'])
                 if 'upload-options' in data and data['upload-options'] is not None:
                     upload_data.append(data['upload-options'])
-            except json.JSONDecodeError:
-                continue  # Skip invalid JSON lines
+            except json.JSONDecodeError as e:
+                invalid_entry = {
+                    'line_number': line_number,
+                    'line_content': line.strip(),
+                    'error': str(e)
+                }
+                invalid_lines.append(invalid_entry)
+                print(f"\nInvalid JSON at line {line_number}: {str(e)}", flush=True)
+                continue
     
     pbar.close()
+    
+    # Save invalid lines to a separate file
+    if invalid_lines:
+        print(f"\nFound {len(invalid_lines)} invalid JSON lines. Saving to invalid_lines.json", flush=True)
+        with open('invalid_lines.json', 'w', encoding='utf-8') as f:
+            json.dump(invalid_lines, f, ensure_ascii=False, indent=2)
+    
     print("\nSaving extracted data to separate files...", flush=True)
     
     if tweets_data:
@@ -85,7 +102,7 @@ def process_json_file(input_file='visakanv.json'):
         os.remove(input_file)
         print(f"✓ Deleted {input_file}", flush=True)
 
-    print("\nProcessing complete! ✨", flush=True)
+    print("\nCreating files completed", flush=True)
 
 if __name__ == "__main__":
     process_json_file()
