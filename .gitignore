@@ -10,6 +10,7 @@ tweets.json
 upload.json
 visakanv.json
 twitter_threads.json
+thread_statistics.json
 
 # Dependencies
 /node_modules

@@ -75,7 +75,7 @@ const exportQuotesToCSV = (tweet, quotes) => {
   URL.revokeObjectURL(url);
 };
 
-function QuoteDistributions() {
+function ThreadDistribution() {
   const [loading, setLoading] = useState(true);
   const [topTweets, setTopTweets] = useState([]);
   const [selectedTweet, setSelectedTweet] = useState(null);
@@ -91,121 +91,85 @@ function QuoteDistributions() {
   const [sortDirection, setSortDirection] = useState("asc");
   const chartRef = useRef(null);
   const [isTweetSelectorExpanded, setIsTweetSelectorExpanded] = useState(false);
-
-  const getTop100Tweets = (tweets, normalized) => {
-    // First get the initial sorted tweets based on normalization
-    let sortedTweets;
-    if (normalized) {
-      // When normalized, only include tweets older than 3 months and sort by quotes per month
-      sortedTweets = tweets
-        .filter((tweet) => tweet.monthsSince >= 3)
-        .sort((a, b) => b.quotesPerMonth - a.quotesPerMonth);
-    } else {
-      // When not normalized, sort by total quotes
-      sortedTweets = [...tweets].sort((a, b) => b.count - a.count);
-    }
-
-    // Get top 100 tweets
-    return sortedTweets.slice(0, 100);
-  };
+  const [threads, setThreads] = useState([]);
+  const [threadMetrics, setThreadMetrics] = useState({
+    byLength: [],
+    byLikes: [],
+    byRetweets: [],
+    byDuration: [],
+  });
+  const [selectedThread, setSelectedThread] = useState(null);
+  const [activeMetric, setActiveMetric] = useState("byLength");
 
   useEffect(() => {
     Promise.all([
-      fetch("/tweet_results.json").then((res) => res.json()),
       fetch("/upload.json").then((res) => res.json()),
-      fetch("/selfQuotedTweets.json").then((res) => res.json()),
+      fetch("/twitter_threads.json").then((res) => res.json()),
     ])
-      .then(([tweetData, uploadData, quotesData]) => {
+      .then(([uploadData, threadData]) => {
         const uploadDate = new Date(uploadData[0].endDate);
         setUploadDate(uploadDate);
 
         const startDate = new Date(uploadData[0].startDate);
         setStartDate(startDate);
 
-        // Create a map of tweet_id to quoting tweets
-        const quoteMap = {};
-        quotesData.forEach((quote) => {
-          const quotedUrl = quote.entities.urls.find((url) =>
-            url.expanded_url.includes("twitter.com/visakanv/status/")
-          );
-
-          if (quotedUrl) {
-            const quotedId = quotedUrl.expanded_url.split("/").pop();
-            if (!quoteMap[quotedId]) {
-              quoteMap[quotedId] = [];
-            }
-            quoteMap[quotedId].push({
-              created_at: new Date(quote.created_at),
-              text: quote.full_text,
-              tweet_id: quote.id_str,
-              in_reply_to: quote.in_reply_to_screen_name,
-              favorite_count: quote.favorite_count,
-              retweet_count: quote.retweet_count,
-            });
-          }
-        });
-        setQuoteData(quoteMap);
-
-        // Calculate age and quotes per month for each tweet
-        const tweetsWithAge = tweetData
-          .filter((tweet) => tweet.tweet_text !== "Tweet not found")
-          .map((tweet) => {
-            const tweetDate = new Date(tweet.created_at);
-            const monthsSince =
-              (uploadDate.getFullYear() - tweetDate.getFullYear()) * 12 +
-              (uploadDate.getMonth() - tweetDate.getMonth());
-
-            // Calculate quotes per month only for tweets older than 3 months
-            const quotesPerMonth =
-              monthsSince >= 3 ? tweet.count / monthsSince : 0;
+        const processedThreads = Object.entries(threadData).map(
+          ([id, thread]) => {
+            const startDate = new Date(thread.metadata.start_date);
+            const endDate = new Date(thread.metadata.end_date);
+            const durationMinutes = (endDate - startDate) / (1000 * 60);
 
             return {
-              ...tweet,
-              created_at: tweetDate,
-              monthsSince,
-              quotesPerMonth,
-              quotesByMonth: (quoteMap[tweet.tweet_id] || []).reduce(
-                (acc, quote) => {
-                  const monthKey = quote.created_at.toISOString().slice(0, 7);
-                  acc[monthKey] = (acc[monthKey] || 0) + 1;
-                  return acc;
-                },
-                {}
-              ),
+              id,
+              length: thread.metadata.length,
+              totalLikes: thread.metadata.total_likes,
+              totalRetweets: thread.metadata.total_retweets,
+              duration: durationMinutes,
+              startDate,
+              endDate,
+              tweets: thread.tweets,
             };
-          });
-
-        // Get initial top 100 tweets
-        const top100 = getTop100Tweets(tweetsWithAge, showNormalized);
-
-        // Find earliest tweet date among top 100
-        const earliestDate = top100.reduce(
-          (earliest, tweet) =>
-            tweet.created_at < earliest ? tweet.created_at : earliest,
-          top100[0].created_at
+          }
         );
 
-        setEarliestTweetDate(earliestDate);
-        setTopTweets(top100);
-        setSelectedTweet(top100[0]);
+        // Sort threads by different metrics
+        const metrics = {
+          byLength: [...processedThreads]
+            .sort((a, b) => b.length - a.length)
+            .slice(0, 100),
+          byLikes: [...processedThreads]
+            .sort((a, b) => b.totalLikes - a.totalLikes)
+            .slice(0, 100),
+          byRetweets: [...processedThreads]
+            .sort((a, b) => b.totalRetweets - a.totalRetweets)
+            .slice(0, 100),
+          byDuration: [...processedThreads]
+            .sort((a, b) => b.duration - a.duration)
+            .slice(0, 100),
+        };
+
+        setThreads(processedThreads);
+        setThreadMetrics(metrics);
+        // Set the first thread from byLength as selected by default
+        setSelectedThread(metrics.byLength[0]);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error loading data:", error);
         setLoading(false);
       });
-  }, [showNormalized]); // Only re-run when normalization changes
+  }, []);
 
-  // Add effect to handle sorting of displayed tweets
-  useEffect(() => {
-    if (!loading) {
-      const newTop100 = getTop100Tweets(topTweets, showNormalized);
-      setTopTweets(newTop100);
-      if (!newTop100.find((t) => t.tweet_id === selectedTweet?.tweet_id)) {
-        setSelectedTweet(newTop100[0]);
-      }
-    }
-  }, [showNormalized, sortBy]);
+  // // Add effect to handle sorting of displayed tweets
+  // useEffect(() => {
+  //   if (!loading) {
+  //     const newTop100 = getTop100Tweets(topTweets, showNormalized);
+  //     setTopTweets(newTop100);
+  //     if (!newTop100.find((t) => t.tweet_id === selectedTweet?.tweet_id)) {
+  //       setSelectedTweet(newTop100[0]);
+  //     }
+  //   }
+  // }, [showNormalized, sortBy]);
 
   if (loading) {
     return (
@@ -361,77 +325,260 @@ function QuoteDistributions() {
     );
   };
 
-  const toggleGroup = (monthsAfter) => {
-    const newCollapsed = new Set(collapsedGroups);
-    if (newCollapsed.has(monthsAfter)) {
-      newCollapsed.delete(monthsAfter);
-    } else {
-      newCollapsed.add(monthsAfter);
-    }
-    setCollapsedGroups(newCollapsed);
+  // Add this function to handle row selection
+  const handleThreadSelection = (thread) => {
+    setSelectedThread(thread);
   };
 
-  const toggleAllGroups = () => {
-    setCollapseAll(!collapseAll);
-    if (!collapseAll) {
-      // Collapse all groups
-      setCollapsedGroups(
-        new Set(
-          Object.keys(
-            quoteData[selectedTweet.tweet_id].reduce((acc, quote) => {
-              const monthsAfter = getMonthsSince(
-                selectedTweet.created_at,
-                quote.created_at
-              );
-              acc[monthsAfter] = true;
-              return acc;
-            }, {})
-          )
-        )
+  const ThreadMetricsSection = () => {
+    const metricLabels = {
+      byLength: "Longest Threads",
+      byLikes: "Most Liked Threads",
+      byRetweets: "Most Retweeted Threads",
+      byDuration: "Longest Duration Threads",
+    };
+
+    const formatDuration = (minutes) => {
+      if (minutes < 1) return "less than a day";
+      if (minutes < 1440) return `${Math.round(minutes / 60)} hours`;
+      const days = Math.floor(minutes / 1440);
+      const remainingHours = Math.round((minutes % 1440) / 60);
+      return `${days}d ${remainingHours}h`;
+    };
+
+    // Helper function to determine if a column should be highlighted
+    const isHighlighted = (metric) => {
+      const highlights = {
+        byLength: "length",
+        byLikes: "likes",
+        byRetweets: "retweets",
+        byDuration: "duration",
+      };
+      return highlights[activeMetric] === metric;
+    };
+
+    // Update metric change handler to also update selected thread
+    const handleMetricChange = (metric) => {
+      setActiveMetric(metric);
+      // Set the first thread of the new metric as selected
+      setSelectedThread(threadMetrics[metric][0]);
+    };
+
+    // Helper function to render column header with optional arrow
+    const renderColumnHeader = (title, metric) => {
+      const highlighted = isHighlighted(metric);
+      return (
+        <th
+          className={`px-2 py-2 text-left ${highlighted ? "bg-blue-50" : ""}`}
+        >
+          <div className="flex items-center gap-[2px]">
+            {title}
+            {highlighted && <span className="text-blue-500">↓</span>}
+          </div>
+        </th>
       );
-    } else {
-      // Expand all groups
-      setCollapsedGroups(new Set());
-    }
+    };
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
+
+        <div className="flex gap-2 mb-4">
+          {Object.entries(metricLabels).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => handleMetricChange(key)}
+              className={`px-4 py-2 rounded ${
+                key === activeMetric
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-100 hover:bg-gray-200"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="overflow-auto max-h-[400px]">
+          <table className="min-w-full">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="px-2 py-2 text-left">Rank</th>
+                <th className="px-2 py-2 text-left">Thread - First Tweet</th>
+                {renderColumnHeader("Thread Length", "length")}
+                {renderColumnHeader("Total Likes", "likes")}
+                {renderColumnHeader("Total Retweets", "retweets")}
+                {renderColumnHeader("Duration", "duration")}
+                <th className="px-2 py-2 text-left">Start Date</th>
+                <th className="px-2 py-2 text-left">End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {threadMetrics[activeMetric].map((thread, index) => (
+                <tr
+                  key={thread.id}
+                  className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
+                    selectedThread?.id === thread.id ? "bg-gray-100 " : ""
+                  }`}
+                  onClick={() => handleThreadSelection(thread)}
+                >
+                  <td className="px-2 py-2">{index + 1}</td>
+                  <td className="px-2 py-2">
+                    <div className="max-w-sm">
+                      <p className="truncate">{thread.tweets[0].text}</p>
+                    </div>
+                  </td>
+                  <td
+                    className={`px-2 py-2 ${
+                      isHighlighted("length") ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    {thread.length.toLocaleString()} tweets
+                  </td>
+                  <td
+                    className={`px-2 py-2 ${
+                      isHighlighted("likes") ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    {thread.totalLikes.toLocaleString()} likes
+                  </td>
+                  <td
+                    className={`px-2 py-2 ${
+                      isHighlighted("retweets") ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    {thread.totalRetweets.toLocaleString()} retweets
+                  </td>
+                  <td
+                    className={`px-2 py-2 ${
+                      isHighlighted("duration") ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    {formatDuration(thread.duration)}
+                  </td>
+                  <td className="px-2 py-2">
+                    {thread.startDate.toLocaleDateString()}
+                  </td>
+                  <td className="px-2 py-2">
+                    {thread.endDate.toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   };
 
-  // Create a function to get the quote-based rank (add this before the return statement)
-  const getQuoteBasedRank = (tweetId) => {
-    // Sort tweets by quotes (either normalized or total)
-    const sortedTweets = [...topTweets].sort((a, b) => {
-      if (showNormalized) {
-        return b.quotesPerMonth - a.quotesPerMonth;
-      }
-      return b.count - a.count;
-    });
+  const getThreadTimelineData = () => {
+    const sortedTweets = [...selectedThread.tweets].sort(
+      (a, b) => new Date(a.created_at) - new Date(b.created_at)
+    );
 
-    return sortedTweets.findIndex((t) => t.tweet_id === tweetId) + 1;
+    return {
+      datasets: [
+        {
+          label: "Thread Posts",
+          data: sortedTweets.map((tweet) => ({
+            x: new Date(tweet.created_at),
+            y: 1,
+            order: tweet.order,
+            text: tweet.text,
+          })),
+          backgroundColor: "rgb(59, 130, 246)",
+          pointRadius: 6,
+          pointHoverRadius: 8,
+        },
+      ],
+    };
   };
 
-  // When selecting a new tweet, we need to update collapsedGroups based on collapseAll
-  const handleTweetSelection = (tweet) => {
-    setSelectedTweet(tweet);
-    setIsTweetSelectorExpanded(false);
+  const timelineOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      tooltip: {
+        callbacks: {
+          title: (context) => `Tweet ${context[0].raw.order}`,
+          label: (context) => {
+            const date = new Date(context.raw.x).toLocaleString();
+            return `Posted: ${date}`;
+          },
+        },
+      },
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          unit: "minute",
+        },
+        title: {
+          display: true,
+          text: "Time",
+        },
+      },
+      y: {
+        display: false,
+        min: 0,
+        max: 2,
+      },
+    },
+  };
 
-    // If collapseAll is true, collapse all groups for the new tweet
-    if (collapseAll) {
-      const newCollapsedGroups = new Set(
-        Object.keys(
-          (quoteData[tweet.tweet_id] || []).reduce((acc, quote) => {
-            const monthsAfter = getMonthsSince(
-              tweet.created_at,
-              quote.created_at
-            );
-            acc[monthsAfter] = true;
-            return acc;
-          }, {})
-        )
-      );
-      setCollapsedGroups(newCollapsedGroups);
-    } else {
-      // If not collapsed, clear the set
-      setCollapsedGroups(new Set());
-    }
+  // Add new component to display thread tweets
+  const ThreadDisplay = () => {
+    if (!selectedThread) return null;
+
+    return (
+      <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">Thread Details</h2>
+          <div className="text-sm text-gray-500">
+            {selectedThread.startDate.toLocaleDateString()} -{" "}
+            {selectedThread.endDate.toLocaleDateString()}
+          </div>
+        </div>
+
+        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+          {selectedThread.tweets
+            .sort((a, b) => a.order - b.order)
+            .map((tweet, index) => (
+              <div
+                key={tweet.tweet_id}
+                className={`p-4 rounded-lg ${
+                  index === 0 ? "bg-blue-50" : "bg-gray-50"
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-medium text-gray-500">
+                    Tweet {tweet.order} of {selectedThread.tweets.length}
+                  </span>
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span>♥ {tweet.favorite_count}</span>
+                    <span>🔄 {tweet.retweet_count}</span>
+                  </div>
+                </div>
+                <p className="text-gray-700">{tweet.text}</p>
+                <div className="mt-2 text-sm text-gray-500">
+                  <a
+                    href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    View →
+                  </a>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -439,211 +586,27 @@ function QuoteDistributions() {
       <div className="mb-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold mb-2">
-              Quote Distribution Over Time
-            </h1>
+            <h1 className="text-2xl font-bold mb-2">Top 100 Threads</h1>
             <p className="text-gray-600">
-              Showing the most quoted tweets and how they were quoted over time
+              Showing Visa's top threads and how they were created over time
             </p>
           </div>
         </div>
       </div>
+      <ThreadMetricsSection />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <ThreadDisplay />
+        {/* <Line data={getThreadTimelineData()} options={timelineOptions} /> */}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div
-          className="md:col-span-1 bg-white p-4 rounded-lg shadow max-h-fit"
-          id="top-100-tweets"
-        >
-          {/* Tweet List - Hidden on Mobile unless expanded */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">
-              {showNormalized
-                ? "Top 100 Tweets (Quotes per Month)"
-                : "Top 100 Tweets (Total Quotes)"}
-            </h2>
-            <div className="space-x-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-2 py-2 border rounded bg-white"
-              >
-                <option value="quotes">Sort by Quotes</option>
-                <option value="date">Sort by Date Created</option>
-              </select>
-              <button
-                onClick={() =>
-                  setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-                }
-                className="px-3 py-2 border rounded hover:bg-gray-100"
-                title={
-                  sortDirection === "asc" ? "Sort Descending" : "Sort Ascending"
-                }
-              >
-                {sortDirection === "asc" ? "↓" : "↑"}
-              </button>
-            </div>
-            <div className="my-2">
-              <button
-                onClick={() => setShowNormalized(!showNormalized)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-              >
-                {showNormalized ? "Regular View" : "Normalize by Age"}
-              </button>
-            </div>
-            {/* Mobile Selected Tweet Display */}
-            <div className="md:hidden">
-              {selectedTweet && (
-                <div className="mb-4">
-                  <div
-                    className={`p-4 rounded border border-blue-200 bg-blue-50`}
-                  >
-                    <p className="text-sm text-gray-500 mb-1">
-                      {showNormalized
-                        ? `${selectedTweet.quotesPerMonth.toFixed(
-                            1
-                          )} quotes/month`
-                        : `${selectedTweet.count || 0} quotes`}
-                    </p>
-                    <p className="text-sm">{selectedTweet.tweet_text}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Created:{" "}
-                      {selectedTweet.created_at.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() =>
-                      setIsTweetSelectorExpanded(!isTweetSelectorExpanded)
-                    }
-                    className="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg flex justify-between items-center"
-                  >
-                    <span>
-                      {isTweetSelectorExpanded ? "Hide Tweets" : "Select Tweet"}
-                    </span>
-                    <span className="text-xl">
-                      {isTweetSelectorExpanded ? "↑" : "↓"}
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <div
-            className={`space-y-4 mt-4 max-h-[400px] md:max-h-[620px] overflow-auto pr-2 -mr-2 ${
-              isTweetSelectorExpanded ? "" : "h-0"
-            }`}
-            id="tweet-selector-mobile"
-          >
-            {topTweets
-              .sort((a, b) => {
-                switch (sortBy) {
-                  case "date":
-                    return sortDirection === "asc"
-                      ? a.created_at - b.created_at
-                      : b.created_at - a.created_at;
-
-                  default: // 'quotes'
-                    if (showNormalized) {
-                      return sortDirection === "asc"
-                        ? b.quotesPerMonth - a.quotesPerMonth
-                        : a.quotesPerMonth - b.quotesPerMonth;
-                    }
-                    return sortDirection === "asc"
-                      ? b.count - a.count
-                      : a.count - b.count;
-                }
-              })
-              .map((tweet) => (
-                <div
-                  key={tweet.tweet_id}
-                  className={`p-4 rounded cursor-pointer transition-colors ${
-                    selectedTweet?.tweet_id === tweet.tweet_id
-                      ? "bg-blue-50 border border-blue-200"
-                      : "hover:bg-gray-50 border"
-                  }`}
-                  onClick={() => handleTweetSelection(tweet)}
-                >
-                  <p className="text-sm text-gray-500 mb-1">
-                    #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
-                    {showNormalized
-                      ? `${tweet.quotesPerMonth.toFixed(1)} quotes/month`
-                      : `${tweet.count || 0} quotes`}
-                  </p>
-                  <p className="text-sm">{tweet.tweet_text}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Created:{" "}
-                    {tweet.created_at.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-              ))}
-          </div>
-          <div
-            className={`space-y-4 mt-4 max-h-[600px] md:max-h-[800px] overflow-auto pr-2 -mr-2 hidden md:block`}
-            id="tweet-selector"
-          >
-            {topTweets
-              .sort((a, b) => {
-                switch (sortBy) {
-                  case "date":
-                    return sortDirection === "asc"
-                      ? a.created_at - b.created_at
-                      : b.created_at - a.created_at;
-
-                  default: // 'quotes'
-                    if (showNormalized) {
-                      return sortDirection === "asc"
-                        ? b.quotesPerMonth - a.quotesPerMonth
-                        : a.quotesPerMonth - b.quotesPerMonth;
-                    }
-                    return sortDirection === "asc"
-                      ? b.count - a.count
-                      : a.count - b.count;
-                }
-              })
-              .map((tweet) => (
-                <div
-                  key={tweet.tweet_id}
-                  className={`p-4 rounded cursor-pointer transition-colors ${
-                    selectedTweet?.tweet_id === tweet.tweet_id
-                      ? "bg-blue-50 border border-blue-200"
-                      : "bg-gray-50 hover:bg-gray-100 border"
-                  }`}
-                  onClick={() => handleTweetSelection(tweet)}
-                >
-                  <p className="text-sm text-gray-500 mb-1">
-                    #{getQuoteBasedRank(tweet.tweet_id)} of 100 •{" "}
-                    {showNormalized
-                      ? `${tweet.quotesPerMonth.toFixed(1)} quotes/month`
-                      : `${tweet.count || 0} quotes`}
-                  </p>
-                  <p className="text-sm">{tweet.tweet_text}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Created:{" "}
-                    {tweet.created_at.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-              ))}
-          </div>
-        </div>
-
         <div className="md:col-span-2 bg-white p-4 rounded-lg shadow">
           {selectedTweet && (
             <>
               <div className="mb-4">
                 <div className="flex justify-between items-center">
                   <h2 className="text-xl font-semibold mb-2">
-                    Quote Distribution
+                    Thread Distribution
                   </h2>
                 </div>
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -867,4 +830,4 @@ function QuoteDistributions() {
   );
 }
 
-export default QuoteDistributions;
+export default ThreadDistribution;

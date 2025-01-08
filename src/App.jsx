@@ -5,6 +5,7 @@ import TopTweets from "./pages/topTweets";
 import TemporalAnalysis from "./pages/TemporalAnalysis";
 import TweetGrowth from "./pages/TweetGrowth";
 import QuoteDistributions from "./pages/QuoteDistributions";
+import ThreadDistribution from "./pages/ThreadDistribution";
 import PropTypes from "prop-types";
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ function App() {
     { to: "/temporal-analysis", label: "Temporal Quote Analysis" },
     { to: "/quote-distributions", label: "Quote Distributions" },
     { to: "/tweet-growth", label: "Tweet Growth" },
+    { to: "/thread-distribution", label: "Thread Distribution" },
   ];
 
   const toggleMenu = () => {
@@ -119,6 +121,10 @@ function App() {
             <Route
               path="/quote-distributions"
               element={<QuoteDistributions />}
+            />
+            <Route
+              path="/thread-distribution"
+              element={<ThreadDistribution />}
             />
           </Routes>
         </main>
