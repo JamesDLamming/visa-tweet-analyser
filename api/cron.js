@@ -60,9 +60,9 @@ const supabase = createClient(
 
 export async function handler(req, res) {
   // Verify the request is from Vercel Cron
-  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  // if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+  //   return res.status(401).json({ error: "Unauthorized" });
+  // }
 
   try {
     // Get the latest archive upload data from Supabase

@@ -54,9 +54,9 @@ async function sendNotificationEmail(oldEndDate, newEndDate) {
 }
 
 export async function testCronLogic(req, res) {
-  if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: "Unauthorized" });
-  }
+  // if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+  //   return res.status(401).json({ error: "Unauthorized" });
+  // }
 
   try {
     const { data: archiveData, error } = await supabase
