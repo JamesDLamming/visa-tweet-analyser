@@ -26,55 +26,6 @@ ChartJS.register(
   zoomPlugin
 );
 
-const exportQuotesToCSV = (tweet, quotes) => {
-  if (!quotes || quotes.length === 0) return;
-
-  // Prepare CSV headers and data
-  const headers = [
-    "Quote Tweet ID",
-    "Quote Text",
-    "Created At",
-    "Likes",
-    "Retweets",
-    "In Reply To",
-    "Quote Tweet URL",
-  ];
-
-  // Sort quotes by creation date (earliest to latest)
-  const sortedQuotes = [...quotes].sort(
-    (a, b) => new Date(a.created_at) - new Date(b.created_at)
-  );
-
-  const rows = sortedQuotes.map((quote) => {
-    return [
-      quote.tweet_id,
-      `"${quote.text.replace(/"/g, '""')}"`, // Escape quotes in text
-      quote.created_at.toISOString(),
-      quote.favorite_count,
-      quote.retweet_count,
-      quote.in_reply_to || "",
-      `https://twitter.com/visakanv/status/${quote.tweet_id}`,
-    ];
-  });
-
-  // Combine headers and rows
-  const csvContent = [
-    headers.join(","),
-    ...rows.map((row) => row.join(",")),
-  ].join("\n");
-
-  // Create and trigger download
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", `quotes_for_tweet_${tweet.tweet_id}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
 function ThreadDistribution() {
   const [loading, setLoading] = useState(true);
   const [topTweets, setTopTweets] = useState([]);
@@ -100,6 +51,7 @@ function ThreadDistribution() {
   });
   const [selectedThread, setSelectedThread] = useState(null);
   const [activeMetric, setActiveMetric] = useState("byLength");
+  const [highlightedTweetId, setHighlightedTweetId] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -160,17 +112,6 @@ function ThreadDistribution() {
       });
   }, []);
 
-  // // Add effect to handle sorting of displayed tweets
-  // useEffect(() => {
-  //   if (!loading) {
-  //     const newTop100 = getTop100Tweets(topTweets, showNormalized);
-  //     setTopTweets(newTop100);
-  //     if (!newTop100.find((t) => t.tweet_id === selectedTweet?.tweet_id)) {
-  //       setSelectedTweet(newTop100[0]);
-  //     }
-  //   }
-  // }, [showNormalized, sortBy]);
-
   if (loading) {
     return (
       <div className="container mx-auto flex flex-col items-center justify-center h-screen px-4">
@@ -185,145 +126,6 @@ function ThreadDistribution() {
       </div>
     );
   }
-
-  const getChartData = (tweet) => {
-    if (!tweet) return null;
-
-    // Create array of months between tweet creation and upload date
-    const months = [];
-    const currentDate = new Date(tweet.created_at);
-    while (currentDate <= uploadDate) {
-      months.push(currentDate.toISOString().slice(0, 7));
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-
-    // Get monthly quote counts
-    const monthlyQuotes = months.map(
-      (month) => tweet.quotesByMonth[month] || 0
-    );
-
-    // Calculate data based on monthly vs cumulative view
-    let cumSum = 0;
-    const data = monthlyQuotes.map((count) => {
-      if (!showMonthly) {
-        cumSum += count;
-        return cumSum;
-      }
-      return count;
-    });
-
-    return {
-      labels: months.map((month) => new Date(month)),
-      datasets: [
-        {
-          label: getChartLabel(),
-          data: data,
-          borderColor: "rgb(75, 192, 192)",
-          backgroundColor: "rgba(75, 192, 192, 0.5)",
-          fill: true,
-        },
-      ],
-    };
-  };
-
-  const getChartLabel = () => {
-    if (showMonthly) {
-      return "Quotes per Month";
-    }
-    return "Total Quotes";
-  };
-
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: "Quote Distribution Over Time",
-      },
-      tooltip: {
-        callbacks: {
-          title: (context) => {
-            // Format the date as "MMM DD, YYYY"
-            return new Date(context[0].parsed.x).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-            });
-          },
-          label: (context) => {
-            const value = context.parsed.y.toFixed(showNormalized ? 2 : 0);
-            return `${getChartLabel()}: ${value}`;
-          },
-        },
-      },
-      zoom: {
-        pan: {
-          enabled: true,
-          mode: "x",
-          modifierKey: "ctrl",
-        },
-        zoom: {
-          wheel: {
-            enabled: true,
-          },
-          pinch: {
-            enabled: true,
-          },
-          mode: "x",
-          drag: {
-            enabled: true,
-            backgroundColor: "rgba(59, 130, 246, 0.3)",
-          },
-        },
-        limits: {
-          x: {
-            min: earliestTweetDate?.getTime(),
-            max: uploadDate?.getTime(),
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        type: "time",
-        time: {
-          unit: "month",
-          displayFormats: {
-            year: "yyyy",
-            month: "MMM yyyy",
-          },
-        },
-        min: earliestTweetDate ? earliestTweetDate.getTime() : undefined,
-        max: new Date(
-          uploadDate.getFullYear(),
-          uploadDate.getMonth() + 1,
-          0
-        ).getTime(),
-        title: {
-          display: true,
-          text: "Date",
-        },
-      },
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: getChartLabel(),
-        },
-      },
-    },
-  };
-
-  // Add this helper function
-  const getMonthsSince = (date1, date2) => {
-    return (
-      (date2.getFullYear() - date1.getFullYear()) * 12 +
-      (date2.getMonth() - date1.getMonth())
-    );
-  };
 
   // Add this function to handle row selection
   const handleThreadSelection = (thread) => {
@@ -485,9 +287,16 @@ function ThreadDistribution() {
             y: 1,
             order: tweet.order,
             text: tweet.text,
+            tweet_id: tweet.tweet_id,
           })),
-          backgroundColor: "rgb(59, 130, 246)",
-          pointRadius: 6,
+          backgroundColor: sortedTweets.map((tweet) =>
+            tweet.tweet_id === highlightedTweetId
+              ? "rgb(239, 68, 68)"
+              : "rgb(59, 130, 246)"
+          ),
+          pointRadius: sortedTweets.map((tweet) =>
+            tweet.tweet_id === highlightedTweetId ? 8 : 6
+          ),
           pointHoverRadius: 8,
         },
       ],
@@ -499,27 +308,63 @@ function ThreadDistribution() {
     maintainAspectRatio: false,
     plugins: {
       tooltip: {
+        enabled: true,
+        mode: "nearest",
+        intersect: true,
         callbacks: {
-          title: (context) => `Tweet ${context[0].raw.order}`,
+          title: (context) =>
+            `Tweet ${context[0].raw.order} \n ${context[0].raw.text}`,
           label: (context) => {
             const date = new Date(context.raw.x).toLocaleString();
             return `Posted: ${date}`;
           },
         },
       },
-      legend: {
-        display: false,
+
+      title: {
+        display: true,
+        text: "Tweets In Thread Over Time",
+      },
+      zoom: {
+        pan: {
+          enabled: true,
+          mode: "x",
+        },
+        zoom: {
+          wheel: {
+            enabled: true,
+          },
+          pinch: {
+            enabled: true,
+          },
+          mode: "x",
+          drag: {
+            enabled: true,
+            backgroundColor: "rgba(59, 130, 246, 0.3)",
+          },
+        },
+        limits: {
+          x: {
+            min: selectedThread?.startDate?.getTime(),
+            max: selectedThread?.endDate?.getTime(),
+          },
+        },
       },
     },
     scales: {
       x: {
         type: "time",
         time: {
-          unit: "minute",
+          unit: "day",
+          displayFormats: {
+            year: "yyyy",
+            month: "MMM yyyy",
+          },
         },
+
         title: {
           display: true,
-          text: "Time",
+          text: "Date Posted",
         },
       },
       y: {
@@ -528,11 +373,55 @@ function ThreadDistribution() {
         max: 2,
       },
     },
+    onHover: null,
+    hover: {
+      mode: "nearest",
+      intersect: true,
+    },
+    onClick: (event, elements) => {
+      if (elements.length > 0) {
+        const dataPoint = elements[0].element.$context.raw;
+        setHighlightedTweetId(dataPoint.tweet_id);
+      }
+    },
   };
 
   // Add new component to display thread tweets
   const ThreadDisplay = () => {
+    const scrollContainerRef = useRef(null);
+    const tweetRefs = useRef({});
+
+    // Scroll effect for graph clicks
+    useEffect(() => {
+      if (highlightedTweetId && tweetRefs.current[highlightedTweetId]) {
+        const tweetElement = tweetRefs.current[highlightedTweetId];
+        const container = scrollContainerRef.current;
+
+        // Get the current scroll position
+        const currentScroll = container.scrollTop;
+
+        // Get the element's position relative to the container
+        const elementTop = tweetElement.offsetTop - container.offsetTop;
+
+        // Only scroll if the element is not visible in the viewport
+        const containerHeight = container.clientHeight;
+        if (
+          elementTop < currentScroll ||
+          elementTop > currentScroll + containerHeight
+        ) {
+          container.scrollTo({
+            top: elementTop - containerHeight / 2,
+            behavior: "smooth",
+          });
+        }
+      }
+    }, [highlightedTweetId]);
+
     if (!selectedThread) return null;
+
+    const sortedTweets = selectedThread.tweets.sort(
+      (a, b) => a.order - b.order
+    );
 
     return (
       <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -544,38 +433,50 @@ function ThreadDistribution() {
           </div>
         </div>
 
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
-          {selectedThread.tweets
-            .sort((a, b) => a.order - b.order)
-            .map((tweet, index) => (
-              <div
-                key={tweet.tweet_id}
-                className={`p-4 rounded-lg ${
-                  index === 0 ? "bg-blue-50" : "bg-gray-50"
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm font-medium text-gray-500">
-                    Tweet {tweet.order} of {selectedThread.tweets.length}
-                  </span>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
-                    <span>♥ {tweet.favorite_count}</span>
-                    <span>🔄 {tweet.retweet_count}</span>
-                  </div>
-                </div>
-                <p className="text-gray-700">{tweet.text}</p>
-                <div className="mt-2 text-sm text-gray-500">
-                  <a
-                    href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    View →
-                  </a>
+        {/* Key the scroll container to selectedThread.id to maintain scroll position */}
+        <div
+          key={selectedThread.id}
+          ref={scrollContainerRef}
+          className="space-y-4 max-h-[600px] overflow-y-auto"
+        >
+          {sortedTweets.map((tweet) => (
+            <div
+              key={tweet.tweet_id}
+              ref={(el) => (tweetRefs.current[tweet.tweet_id] = el)}
+              className={`p-4 rounded-lg ${
+                tweet.tweet_id === highlightedTweetId
+                  ? "bg-blue-50"
+                  : "bg-gray-50"
+              } cursor-pointer transition-all`}
+              onClick={() => setHighlightedTweetId(tweet.tweet_id)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm font-medium text-gray-500">
+                  Tweet {tweet.order} of {sortedTweets.length}
+                </span>
+                <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <span>♥ {tweet.favorite_count}</span>
+                  <span>🔄 {tweet.retweet_count}</span>
                 </div>
               </div>
-            ))}
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm text-gray-500">
+                  Posted at: {new Date(tweet.created_at).toLocaleString()}
+                </span>
+              </div>
+              <p className="text-gray-700">{tweet.text}</p>
+              <div className="mt-2 text-sm text-gray-500">
+                <a
+                  href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  View →
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -594,236 +495,30 @@ function ThreadDistribution() {
         </div>
       </div>
       <ThreadMetricsSection />
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <ThreadDisplay />
-        {/* <Line data={getThreadTimelineData()} options={timelineOptions} /> */}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow">
-          {selectedTweet && (
-            <>
-              <div className="mb-4">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-semibold mb-2">
-                    Thread Distribution
-                  </h2>
-                </div>
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 p-3 rounded">
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Total Quotes
-                    </h3>
-                    <p className="text-2xl font-bold">
-                      {quoteData[
-                        selectedTweet.tweet_id
-                      ]?.length.toLocaleString() || 0}
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Most Active Month
-                    </h3>
-                    <p className="text-2xl font-bold">
-                      {Object.entries(selectedTweet.quotesByMonth)
-                        .sort(([, a], [, b]) => b - a)[0]?.[0]
-                        ?.split("-")
-                        .map((part, i) =>
-                          i === 1
-                            ? new Date(2000, part - 1).toLocaleString(
-                                "default",
-                                { month: "short" }
-                              )
-                            : part
-                        )
-                        .join(" ") || "N/A"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {Object.entries(selectedTweet.quotesByMonth)
-                        .sort(([, a], [, b]) => b - a)[0]?.[1]
-                        .toLocaleString() || 0}{" "}
-                      quotes
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded">
-                    <h3 className="text-sm font-medium text-gray-500">
-                      Average per Month
-                    </h3>
-                    <p className="text-2xl font-bold">
-                      {(
-                        (quoteData[selectedTweet.tweet_id]?.length || 0) /
-                        Object.keys(selectedTweet.quotesByMonth).length
-                      ).toFixed(1)}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4 bg-gray-50 p-4 rounded">
-                  <p className="text-gray-600">{selectedTweet.tweet_text}</p>
-
-                  <div className="text-sm text-gray-500 mt-1 flex gap-4">
-                    <span>
-                      {selectedTweet.created_at.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                    <span>♥ {selectedTweet.favorite_count}</span>
-                    <span>🔄 {selectedTweet.retweet_count}</span>
-                    {selectedTweet.in_reply_to && (
-                      <span>↩️ Reply to @{selectedTweet.in_reply_to}</span>
-                    )}
-                    <a
-                      href={`https://twitter.com/visakanv/status/${selectedTweet.tweet_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 hover:text-blue-600"
-                    >
-                      View on Twitter →
-                    </a>
-                  </div>
-                </div>
-              </div>
-              <div className="h-[300px] md:h-[350px]">
-                <Line
-                  data={getChartData(selectedTweet)}
-                  options={chartOptions}
-                  ref={chartRef}
-                />
-              </div>
-              <div className="mt-2 text-center flex justify-center gap-4">
-                <button
-                  onClick={() => {
-                    const chart = chartRef.current;
-                    if (chart) {
-                      chart.resetZoom();
-                    }
-                  }}
-                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-                >
-                  Reset Zoom
-                </button>
-                <button
-                  onClick={() => setShowMonthly(!showMonthly)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
-                >
-                  {showMonthly ? "Show Cumulative" : "Show Monthly"}
-                </button>
-              </div>
-              {selectedTweet && quoteData[selectedTweet.tweet_id] && (
-                <div className="mt-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Quoting Tweets</h3>
-                    <div className="flex gap-2">
-                      {quoteData[selectedTweet.tweet_id] &&
-                        quoteData[selectedTweet.tweet_id].length > 0 && (
-                          <button
-                            onClick={() =>
-                              exportQuotesToCSV(
-                                selectedTweet,
-                                quoteData[selectedTweet.tweet_id]
-                              )
-                            }
-                            className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
-                          >
-                            Export CSV
-                          </button>
-                        )}
-                      <button
-                        onClick={toggleAllGroups}
-                        className="text-sm text-blue-500 hover:text-blue-600"
-                      >
-                        {collapseAll ? "Expand All" : "Collapse All"}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                    {Object.entries(
-                      quoteData[selectedTweet.tweet_id].reduce((acc, quote) => {
-                        const monthsAfter = getMonthsSince(
-                          selectedTweet.created_at,
-                          quote.created_at
-                        );
-                        if (!acc[monthsAfter]) {
-                          acc[monthsAfter] = [];
-                        }
-                        acc[monthsAfter].push(quote);
-                        return acc;
-                      }, {})
-                    )
-                      .sort(([a], [b]) => Number(a) - Number(b))
-                      .map(([monthsAfter, quotes]) => (
-                        <div
-                          key={monthsAfter}
-                          className="border rounded-lg overflow-hidden"
-                        >
-                          <button
-                            onClick={() => toggleGroup(monthsAfter)}
-                            className="w-full px-4 py-2 bg-gray-50 hover:bg-gray-100 flex justify-between items-center text-left"
-                          >
-                            <h4 className="font-medium text-gray-700">
-                              {monthsAfter === "0"
-                                ? "First Month"
-                                : `${monthsAfter} Month${
-                                    Number(monthsAfter) === 1 ? "" : "s"
-                                  } After`}
-                              <span className="text-sm font-normal text-gray-500 ml-2">
-                                ({quotes.length} quote
-                                {quotes.length === 1 ? "" : "s"})
-                              </span>
-                            </h4>
-                            <span className="text-gray-400">
-                              {collapsedGroups.has(monthsAfter) ? "+" : "−"}
-                            </span>
-                          </button>
-                          {!collapsedGroups.has(monthsAfter) && (
-                            <div className="space-y-3 p-4">
-                              {quotes
-                                .sort((a, b) => a.created_at - b.created_at)
-                                .map((quote) => (
-                                  <div
-                                    key={quote.tweet_id}
-                                    className="border-l border-gray-200 pl-4"
-                                  >
-                                    <p className="text-sm">{quote.text}</p>
-                                    <div className="text-xs text-gray-500 mt-1 flex gap-4">
-                                      <span>
-                                        {quote.created_at.toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            year: "numeric",
-                                            month: "short",
-                                            day: "numeric",
-                                          }
-                                        )}
-                                      </span>
-                                      <span>♥ {quote.favorite_count}</span>
-                                      <span>🔄 {quote.retweet_count}</span>
-                                      {quote.in_reply_to && (
-                                        <span>
-                                          ↩️ Reply to @{quote.in_reply_to}
-                                        </span>
-                                      )}
-                                      <a
-                                        href={`https://twitter.com/visakanv/status/${quote.tweet_id}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 hover:text-blue-600"
-                                      >
-                                        View on Twitter →
-                                      </a>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+        <div className="bg-white p-4 rounded-lg shadow mb-6 col-span-2">
+          <div className="h-[600px] md:h-[600px]">
+            <Line
+              data={getThreadTimelineData()}
+              options={timelineOptions}
+              ref={chartRef}
+            />
+          </div>
+          <div className="mt-2 text-center flex justify-center gap-4">
+            <button
+              onClick={() => {
+                const chart = chartRef.current;
+                if (chart) {
+                  chart.resetZoom();
+                }
+              }}
+              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+            >
+              Reset Zoom
+            </button>
+          </div>
         </div>
       </div>
     </div>
