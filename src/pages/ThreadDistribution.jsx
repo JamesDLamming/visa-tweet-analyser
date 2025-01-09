@@ -205,6 +205,34 @@ function ThreadDistribution() {
       };
     };
 
+    // Add ref for the table container
+    const tableContainerRef = useRef(null);
+    const rowRefs = useRef({});
+
+    // Add useEffect to handle scrolling when selected thread changes
+    useEffect(() => {
+      if (
+        selectedThread &&
+        rowRefs.current[selectedThread.id] &&
+        tableContainerRef.current
+      ) {
+        const row = rowRefs.current[selectedThread.id];
+        const container = tableContainerRef.current;
+
+        const rowTop = row.offsetTop;
+        const containerHeight = container.clientHeight;
+        const scrollTop = container.scrollTop;
+
+        // Only scroll if the row is not visible in the viewport
+        if (rowTop < scrollTop || rowTop > scrollTop + containerHeight) {
+          container.scrollTo({
+            top: rowTop - containerHeight / 2,
+            behavior: "smooth",
+          });
+        }
+      }
+    }, [selectedThread]);
+
     return (
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
@@ -225,7 +253,10 @@ function ThreadDistribution() {
           ))}
         </div>
 
-        <div className="overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ">
+        <div
+          ref={tableContainerRef}
+          className="overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
+        >
           <div className="pr-2 sm:pr-0 w-full table-auto">
             <table className="table-auto w-full">
               <thead className="bg-gray-200">
@@ -264,6 +295,7 @@ function ThreadDistribution() {
                 {threadMetrics[activeMetric].map((thread, index) => (
                   <tr
                     key={thread.id}
+                    ref={(el) => (rowRefs.current[thread.id] = el)}
                     className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
                       selectedThread?.id === thread.id ? "bg-gray-100 " : ""
                     }`}
