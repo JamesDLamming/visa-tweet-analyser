@@ -201,73 +201,75 @@ function ThreadDistribution() {
           ))}
         </div>
 
-        <div className="overflow-auto max-h-[400px]">
-          <table className="min-w-full">
-            <thead className="bg-gray-200">
-              <tr>
-                <th className="px-2 py-2 text-left">Rank</th>
-                <th className="px-2 py-2 text-left">Thread - First Tweet</th>
-                {renderColumnHeader("Thread Length", "length")}
-                {renderColumnHeader("Total Likes", "likes")}
-                {renderColumnHeader("Total Retweets", "retweets")}
-                {renderColumnHeader("Duration", "duration")}
-                <th className="px-2 py-2 text-left">Start Date</th>
-                <th className="px-2 py-2 text-left">End Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {threadMetrics[activeMetric].map((thread, index) => (
-                <tr
-                  key={thread.id}
-                  className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
-                    selectedThread?.id === thread.id ? "bg-gray-100 " : ""
-                  }`}
-                  onClick={() => handleThreadSelection(thread)}
-                >
-                  <td className="px-2 py-2">{index + 1}</td>
-                  <td className="px-2 py-2">
-                    <div className="max-w-sm">
-                      <p className="truncate">{thread.tweets[0].text}</p>
-                    </div>
-                  </td>
-                  <td
-                    className={`px-2 py-2 ${
-                      isHighlighted("length") ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    {thread.length.toLocaleString()} tweets
-                  </td>
-                  <td
-                    className={`px-2 py-2 ${
-                      isHighlighted("likes") ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    {thread.totalLikes.toLocaleString()} likes
-                  </td>
-                  <td
-                    className={`px-2 py-2 ${
-                      isHighlighted("retweets") ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    {thread.totalRetweets.toLocaleString()} retweets
-                  </td>
-                  <td
-                    className={`px-2 py-2 ${
-                      isHighlighted("duration") ? "bg-blue-50" : ""
-                    }`}
-                  >
-                    {formatDuration(thread.duration)}
-                  </td>
-                  <td className="px-2 py-2">
-                    {thread.startDate.toLocaleDateString()}
-                  </td>
-                  <td className="px-2 py-2">
-                    {thread.endDate.toLocaleDateString()}
-                  </td>
+        <div className="overflow-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+          <div className="pr-0">
+            <table className="min-w-full">
+              <thead className="bg-gray-200">
+                <tr>
+                  <th className="px-2 py-2 text-left">Rank</th>
+                  <th className="px-2 py-2 text-left">Thread - First Tweet</th>
+                  {renderColumnHeader("Thread Length", "length")}
+                  {renderColumnHeader("Total Likes", "likes")}
+                  {renderColumnHeader("Total Retweets", "retweets")}
+                  {renderColumnHeader("Duration", "duration")}
+                  <th className="px-2 py-2 text-left">Start Date</th>
+                  <th className="px-2 py-2 text-left">End Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {threadMetrics[activeMetric].map((thread, index) => (
+                  <tr
+                    key={thread.id}
+                    className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
+                      selectedThread?.id === thread.id ? "bg-gray-100 " : ""
+                    }`}
+                    onClick={() => handleThreadSelection(thread)}
+                  >
+                    <td className="px-2 py-2">{index + 1}</td>
+                    <td className="px-2 py-2">
+                      <div className="max-w-sm">
+                        <p className="truncate">{thread.tweets[0].text}</p>
+                      </div>
+                    </td>
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("length") ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.length.toLocaleString()} tweets
+                    </td>
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("likes") ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.totalLikes.toLocaleString()} likes
+                    </td>
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("retweets") ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.totalRetweets.toLocaleString()} retweets
+                    </td>
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("duration") ? "bg-blue-50" : ""
+                      }`}
+                    >
+                      {formatDuration(thread.duration)}
+                    </td>
+                    <td className="px-2 py-2">
+                      {thread.startDate.toLocaleDateString()}
+                    </td>
+                    <td className="px-2 py-2">
+                      {thread.endDate.toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     );
@@ -429,10 +431,10 @@ function ThreadDistribution() {
     );
 
     return (
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className="bg-white p-4 pr-2 rounded-lg shadow mb-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Thread Details</h2>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500 pr-2">
             {selectedThread.startDate.toLocaleDateString()} -{" "}
             {selectedThread.endDate.toLocaleDateString()}
           </div>
@@ -442,46 +444,48 @@ function ThreadDistribution() {
         <div
           key={selectedThread.id}
           ref={scrollContainerRef}
-          className="space-y-4 max-h-[600px] overflow-y-auto"
+          className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
         >
-          {sortedTweets.map((tweet) => (
-            <div
-              key={tweet.tweet_id}
-              ref={(el) => (tweetRefs.current[tweet.tweet_id] = el)}
-              className={`p-4 rounded-lg ${
-                tweet.tweet_id === highlightedTweetId
-                  ? "bg-blue-50"
-                  : "bg-gray-50"
-              } cursor-pointer transition-all`}
-              onClick={() => setHighlightedTweetId(tweet.tweet_id)}
-            >
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-sm font-medium text-gray-500">
-                  Tweet {tweet.order} of {sortedTweets.length}
-                </span>
-                <div className="flex items-center gap-3 text-sm text-gray-500">
-                  <span>♥ {tweet.favorite_count}</span>
-                  <span>🔄 {tweet.retweet_count}</span>
+          <div className="pr-2 space-y-4 ">
+            {sortedTweets.map((tweet) => (
+              <div
+                key={tweet.tweet_id}
+                ref={(el) => (tweetRefs.current[tweet.tweet_id] = el)}
+                className={`p-4 rounded-lg ${
+                  tweet.tweet_id === highlightedTweetId
+                    ? "bg-blue-50"
+                    : "bg-gray-50"
+                } cursor-pointer transition-all`}
+                onClick={() => setHighlightedTweetId(tweet.tweet_id)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm font-medium text-gray-500">
+                    Tweet {tweet.order} of {sortedTweets.length}
+                  </span>
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <span>♥ {tweet.favorite_count}</span>
+                    <span>🔄 {tweet.retweet_count}</span>
+                  </div>
+                </div>
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-sm text-gray-500">
+                    Posted at: {new Date(tweet.created_at).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-gray-700">{tweet.text}</p>
+                <div className="mt-2 text-sm text-gray-500">
+                  <a
+                    href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:text-blue-600"
+                  >
+                    View →
+                  </a>
                 </div>
               </div>
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-sm text-gray-500">
-                  Posted at: {new Date(tweet.created_at).toLocaleString()}
-                </span>
-              </div>
-              <p className="text-gray-700">{tweet.text}</p>
-              <div className="mt-2 text-sm text-gray-500">
-                <a
-                  href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600"
-                >
-                  View →
-                </a>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     );
