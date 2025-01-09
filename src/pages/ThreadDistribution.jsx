@@ -355,13 +355,18 @@ function ThreadDistribution() {
       x: {
         type: "time",
         time: {
-          unit: "day",
           displayFormats: {
-            year: "yyyy",
+            millisecond: "MMM d, HH:mm:ss.SSS",
+            second: "MMM d, HH:mm:ss",
+            minute: "MMM d, HH:mm",
+            hour: "MMM d, HH:mm",
+            day: "MMM d",
+            week: "MMM d",
             month: "MMM yyyy",
+            quarter: "MMM yyyy",
+            year: "yyyy",
           },
         },
-
         title: {
           display: true,
           text: "Date Posted",
