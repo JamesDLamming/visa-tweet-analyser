@@ -161,21 +161,55 @@ function ThreadDistribution() {
       const highlighted = isHighlighted(metric);
       return (
         <th
-          className={`px-2 py-2 text-left ${highlighted ? "bg-blue-50" : ""}`}
+          className={`px-2 py-2 text-left text-sm sm:text-base ${
+            highlighted ? "sm:bg-blue-50" : ""
+          }`}
         >
           <div className="flex items-center gap-[2px]">
             {title}
-            {highlighted && <span className="text-blue-500">↓</span>}
+            {highlighted && <span className="sm:text-blue-500">↓</span>}
           </div>
         </th>
       );
+    };
+
+    // Add this function to determine which columns to show based on screen size
+    const getVisibleColumns = () => {
+      // Using window.innerWidth directly isn't ideal for React
+      // Consider using a useMediaQuery hook or CSS approach instead
+      const isMobile = window.innerWidth < 768;
+
+      if (isMobile) {
+        return {
+          rank: true,
+          firstTweet: true,
+          [activeMetric.replace("by", "").toLowerCase()]: true, // Show only active metric column
+          startDate: false,
+          endDate: false,
+          length: activeMetric === "byLength",
+          likes: activeMetric === "byLikes",
+          retweets: activeMetric === "byRetweets",
+          duration: activeMetric === "byDuration",
+        };
+      }
+
+      return {
+        rank: true,
+        firstTweet: true,
+        length: true,
+        likes: true,
+        retweets: true,
+        duration: true,
+        startDate: true,
+        endDate: true,
+      };
     };
 
     return (
       <div className="bg-white p-4 rounded-lg shadow mb-6">
         <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           {Object.entries(metricLabels).map(([key, label]) => (
             <button
               key={key}
@@ -191,19 +225,39 @@ function ThreadDistribution() {
           ))}
         </div>
 
-        <div className="overflow-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
-          <div className="pr-0">
-            <table className="min-w-full">
+        <div className="overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 ">
+          <div className="pr-2 sm:pr-0 w-full table-auto">
+            <table className="table-auto w-full">
               <thead className="bg-gray-200">
                 <tr>
-                  <th className="px-2 py-2 text-left">Rank</th>
-                  <th className="px-2 py-2 text-left">Thread - First Tweet</th>
-                  {renderColumnHeader("Thread Length", "length")}
-                  {renderColumnHeader("Total Likes", "likes")}
-                  {renderColumnHeader("Total Retweets", "retweets")}
-                  {renderColumnHeader("Duration", "duration")}
-                  <th className="px-2 py-2 text-left">Start Date</th>
-                  <th className="px-2 py-2 text-left">End Date</th>
+                  {getVisibleColumns().rank && (
+                    <th className="w-12 px-2 py-2 text-left text-sm sm:text-base">
+                      Rank
+                    </th>
+                  )}
+                  {getVisibleColumns().firstTweet && (
+                    <th className="w-full sm:w-auto px-2 py-2 text-left text-sm sm:text-base">
+                      First Tweet
+                    </th>
+                  )}
+                  {getVisibleColumns().length &&
+                    renderColumnHeader("Length", "length")}
+                  {getVisibleColumns().likes &&
+                    renderColumnHeader("Likes", "likes")}
+                  {getVisibleColumns().retweets &&
+                    renderColumnHeader("RTs", "retweets")}
+                  {getVisibleColumns().duration &&
+                    renderColumnHeader("Duration", "duration")}
+                  {getVisibleColumns().startDate && (
+                    <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
+                      Start
+                    </th>
+                  )}
+                  {getVisibleColumns().endDate && (
+                    <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
+                      End
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -215,46 +269,64 @@ function ThreadDistribution() {
                     }`}
                     onClick={() => handleThreadSelection(thread)}
                   >
-                    <td className="px-2 py-2">{index + 1}</td>
-                    <td className="px-2 py-2">
-                      <div className="max-w-sm">
-                        <p className="truncate">{thread.tweets[0].text}</p>
-                      </div>
-                    </td>
-                    <td
-                      className={`px-2 py-2 ${
-                        isHighlighted("length") ? "bg-blue-50" : ""
-                      }`}
-                    >
-                      {thread.length.toLocaleString()} tweets
-                    </td>
-                    <td
-                      className={`px-2 py-2 ${
-                        isHighlighted("likes") ? "bg-blue-50" : ""
-                      }`}
-                    >
-                      {thread.totalLikes.toLocaleString()} likes
-                    </td>
-                    <td
-                      className={`px-2 py-2 ${
-                        isHighlighted("retweets") ? "bg-blue-50" : ""
-                      }`}
-                    >
-                      {thread.totalRetweets.toLocaleString()} retweets
-                    </td>
-                    <td
-                      className={`px-2 py-2 ${
-                        isHighlighted("duration") ? "bg-blue-50" : ""
-                      }`}
-                    >
-                      {formatDuration(thread.duration)}
-                    </td>
-                    <td className="px-2 py-2">
-                      {thread.startDate.toLocaleDateString()}
-                    </td>
-                    <td className="px-2 py-2">
-                      {thread.endDate.toLocaleDateString()}
-                    </td>
+                    {getVisibleColumns().rank && (
+                      <td className="px-2 py-2">{index + 1}</td>
+                    )}
+                    {getVisibleColumns().firstTweet && (
+                      <td className="px-2 py-2">
+                        <div className="max-w-[150px] sm:max-w-sm">
+                          <p className="text-xs sm:text-sm">
+                            {thread.tweets[0].text}
+                          </p>
+                        </div>
+                      </td>
+                    )}
+                    {getVisibleColumns().length && (
+                      <td
+                        className={`px-2 py-2 ${
+                          isHighlighted("length") ? "sm:bg-blue-50" : ""
+                        }`}
+                      >
+                        {thread.length.toLocaleString()}
+                      </td>
+                    )}
+                    {getVisibleColumns().likes && (
+                      <td
+                        className={`px-2 py-2 ${
+                          isHighlighted("likes") ? "sm:bg-blue-50" : ""
+                        }`}
+                      >
+                        {thread.totalLikes.toLocaleString()}
+                      </td>
+                    )}
+                    {getVisibleColumns().retweets && (
+                      <td
+                        className={`px-2 py-2 ${
+                          isHighlighted("retweets") ? "sm:bg-blue-50" : ""
+                        }`}
+                      >
+                        {thread.totalRetweets.toLocaleString()}
+                      </td>
+                    )}
+                    {getVisibleColumns().duration && (
+                      <td
+                        className={`px-2 py-2 ${
+                          isHighlighted("duration") ? "sm:bg-blue-50" : ""
+                        }`}
+                      >
+                        {formatDuration(thread.duration)}
+                      </td>
+                    )}
+                    {getVisibleColumns().startDate && (
+                      <td className="hidden md:table-cell px-2 py-2">
+                        {thread.startDate.toLocaleDateString()}
+                      </td>
+                    )}
+                    {getVisibleColumns().endDate && (
+                      <td className="hidden md:table-cell px-2 py-2">
+                        {thread.endDate.toLocaleDateString()}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -434,7 +506,7 @@ function ThreadDistribution() {
         <div
           key={selectedThread.id}
           ref={scrollContainerRef}
-          className="max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
+          className="max-h-[500px] md:max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
         >
           <div className="pr-2 space-y-4 ">
             {sortedTweets.map((tweet) => (
@@ -449,21 +521,23 @@ function ThreadDistribution() {
                 onClick={() => setHighlightedTweetId(tweet.tweet_id)}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm font-medium text-gray-500">
+                  <span className="text-xs sm:text-sm font-medium text-gray-500">
                     Tweet {tweet.order} of {sortedTweets.length}
                   </span>
-                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-500">
                     <span>♥ {tweet.favorite_count}</span>
                     <span>🔄 {tweet.retweet_count}</span>
                   </div>
                 </div>
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm text-gray-500">
+                  <span className="text-xs sm:text-sm text-gray-500">
                     Posted at: {new Date(tweet.created_at).toLocaleString()}
                   </span>
                 </div>
-                <p className="text-gray-700">{tweet.text}</p>
-                <div className="mt-2 text-sm text-gray-500">
+                <p className="text-gray-700 text-sm sm:text-base">
+                  {tweet.text}
+                </p>
+                <div className="mt-2 text-xs sm:text-sm text-gray-500">
                   <a
                     href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
                     target="_blank"
@@ -518,10 +592,12 @@ function ThreadDistribution() {
       </div>
       <ThreadMetricsSection />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ThreadDisplay />
+      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6">
+        <div className="hidden md:block">
+          <ThreadDisplay />
+        </div>{" "}
         <div className="bg-white p-4 rounded-lg shadow mb-6 col-span-2">
-          <div className="h-[600px] md:h-[600px]">
+          <div className="h-[300px] md:h-[600px]">
             <Line
               data={getThreadTimelineData()}
               options={timelineOptions}
@@ -541,6 +617,9 @@ function ThreadDistribution() {
               Reset Zoom
             </button>
           </div>
+        </div>
+        <div className="block md:hidden">
+          <ThreadDisplay />
         </div>
       </div>
     </div>
