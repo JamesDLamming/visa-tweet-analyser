@@ -28,21 +28,7 @@ ChartJS.register(
 
 function ThreadDistribution() {
   const [loading, setLoading] = useState(true);
-  const [topTweets, setTopTweets] = useState([]);
-  const [selectedTweet, setSelectedTweet] = useState(null);
-  const [uploadDate, setUploadDate] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [quoteData, setQuoteData] = useState({});
-  const [showMonthly, setShowMonthly] = useState(false);
-  const [showNormalized, setShowNormalized] = useState(false);
-  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
-  const [collapseAll, setCollapseAll] = useState(false);
-  const [earliestTweetDate, setEarliestTweetDate] = useState(null);
-  const [sortBy, setSortBy] = useState("quotes");
-  const [sortDirection, setSortDirection] = useState("asc");
   const chartRef = useRef(null);
-  const [isTweetSelectorExpanded, setIsTweetSelectorExpanded] = useState(false);
-  const [threads, setThreads] = useState([]);
   const [threadMetrics, setThreadMetrics] = useState({
     byLength: [],
     byLikes: [],
@@ -52,19 +38,14 @@ function ThreadDistribution() {
   const [selectedThread, setSelectedThread] = useState(null);
   const [activeMetric, setActiveMetric] = useState("byLength");
   const [highlightedTweetId, setHighlightedTweetId] = useState(null);
+  const [statistics, setStatistics] = useState({});
 
   useEffect(() => {
     Promise.all([
-      fetch("/upload.json").then((res) => res.json()),
       fetch("/twitter_threads.json").then((res) => res.json()),
+      fetch("/thread_statistics.json").then((res) => res.json()),
     ])
-      .then(([uploadData, threadData]) => {
-        const uploadDate = new Date(uploadData[0].endDate);
-        setUploadDate(uploadDate);
-
-        const startDate = new Date(uploadData[0].startDate);
-        setStartDate(startDate);
-
+      .then(([threadData, statisticsData]) => {
         const processedThreads = Object.entries(threadData).map(
           ([id, thread]) => {
             const startDate = new Date(thread.metadata.start_date);
@@ -100,7 +81,16 @@ function ThreadDistribution() {
             .slice(0, 100),
         };
 
-        setThreads(processedThreads);
+        const longestThread = statisticsData.longest_thread;
+        const averageThreadLength = statisticsData.average_thread_length;
+        const totalThreads = statisticsData.total_threads;
+
+        setStatistics({
+          longestThread,
+          averageThreadLength,
+          totalThreads,
+        });
+
         setThreadMetrics(metrics);
         // Set the first thread from byLength as selected by default
         setSelectedThread(metrics.byLength[0]);
@@ -501,6 +491,29 @@ function ThreadDistribution() {
               Showing Visa's top threads and how they were created over time
             </p>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <h3 className="text-sm font-medium text-gray-500">Total Threads</h3>
+          <p className="text-2xl font-bold">
+            {statistics.totalThreads.toLocaleString()}
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <h3 className="text-sm font-medium text-gray-500">Longest Thread</h3>
+          <p className="text-2xl font-bold">
+            {statistics.longestThread.length.toLocaleString()} tweets
+          </p>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow mb-6">
+          <h3 className="text-sm font-medium text-gray-500">
+            Average Thread Length
+          </h3>
+          <p className="text-2xl font-bold">
+            {statistics.averageThreadLength.toFixed(1)} tweets
+          </p>
         </div>
       </div>
       <ThreadMetricsSection />

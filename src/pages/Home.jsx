@@ -15,9 +15,16 @@ function Home() {
       fetch("/selfQuotedTweets.json").then((res) => res.json()),
       fetch("/totalTweetLength.json").then((res) => res.json()),
       fetch("/upload.json").then((res) => res.json()),
+      fetch("/thread_statistics.json").then((res) => res.json()),
     ])
       .then(
-        ([tweetResults, selfQuotedTweets, totalTweetLength, uploadDetails]) => {
+        ([
+          tweetResults,
+          selfQuotedTweets,
+          totalTweetLength,
+          uploadDetails,
+          threadStats,
+        ]) => {
           const validTweets = tweetResults.filter(
             (tweet) => tweet.tweet_text !== "Tweet not found"
           );
@@ -27,6 +34,7 @@ function Home() {
             uniqueQuotedTweets: validTweets.length,
             totalTweets: totalTweetLength,
             uploadStats: uploadDetails,
+            threadStats: threadStats,
           });
           setLoading(false);
         }
@@ -102,16 +110,9 @@ function Home() {
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6 text-center">
             <h2 className="text-3xl font-bold text-orange-600 mb-2">
-              {new Date(stats.uploadStats?.[0]?.endDate).toLocaleDateString(
-                "en-US",
-                {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                }
-              )}
+              {stats.threadStats.longest_thread.length.toLocaleString()}
             </h2>
-            <p className="text-gray-600">Latest Tweet Export</p>
+            <p className="text-gray-600"># of Tweets in Longest Thread</p>
           </div>
         </div>
 
@@ -160,10 +161,27 @@ function Home() {
               self-quotes over time
             </p>
           </Link>
+          <Link
+            to="/thread-distribution"
+            className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+          >
+            <h3 className="text-xl font-semibold mb-2">Thread Distribution</h3>
+            <p className="text-gray-600">
+              Explore Visa&apos;s Twitter Threads. See which are the longest,
+              most popular and when they were posted.
+            </p>
+          </Link>
         </div>
 
         <div className="bg-gray-50 p-6 rounded-lg">
           <h3 className="text-lg font-semibold mb-3">About</h3>
+          <p className="text-gray-600 text-sm mb-4">
+            Latest Tweet Export:{" "}
+            {new Date(stats.uploadStats[0].endDate).toLocaleDateString(
+              "en-US",
+              { year: "numeric", month: "short", day: "numeric" }
+            )}
+          </p>
           <p className="text-gray-600 text-sm mb-4">
             Data sourced from the{" "}
             <a
