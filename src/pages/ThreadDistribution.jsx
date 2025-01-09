@@ -13,6 +13,7 @@ import {
 import { Line } from "react-chartjs-2";
 import "chartjs-adapter-date-fns";
 import zoomPlugin from "chartjs-plugin-zoom";
+import PropTypes from "prop-types";
 
 ChartJS.register(
   CategoryScale,
@@ -276,6 +277,19 @@ const ThreadMetricsSection = ({
   );
 };
 
+ThreadMetricsSection.propTypes = {
+  threadMetrics: PropTypes.shape({
+    byLength: PropTypes.array.isRequired,
+    byLikes: PropTypes.array.isRequired,
+    byRetweets: PropTypes.array.isRequired,
+    byDuration: PropTypes.array.isRequired,
+  }).isRequired,
+  activeMetric: PropTypes.string.isRequired,
+  selectedThread: PropTypes.object,
+  handleThreadSelection: PropTypes.func.isRequired,
+  handleMetricChange: PropTypes.func.isRequired,
+};
+
 const ThreadDisplay = ({
   selectedThread,
   highlightedTweetId,
@@ -373,6 +387,26 @@ const ThreadDisplay = ({
       </div>
     </div>
   );
+};
+
+ThreadDisplay.propTypes = {
+  selectedThread: PropTypes.shape({
+    id: PropTypes.string,
+    tweets: PropTypes.arrayOf(
+      PropTypes.shape({
+        tweet_id: PropTypes.string.isRequired,
+        text: PropTypes.string.isRequired,
+        order: PropTypes.number.isRequired,
+        created_at: PropTypes.string.isRequired,
+        favorite_count: PropTypes.number.isRequired,
+        retweet_count: PropTypes.number.isRequired,
+      })
+    ).isRequired,
+    startDate: PropTypes.instanceOf(Date).isRequired,
+    endDate: PropTypes.instanceOf(Date).isRequired,
+  }),
+  highlightedTweetId: PropTypes.string,
+  setHighlightedTweetId: PropTypes.func.isRequired,
 };
 
 function ThreadDistribution() {
@@ -601,7 +635,8 @@ function ThreadDistribution() {
           <div>
             <h1 className="text-2xl font-bold mb-2">Top 100 Threads</h1>
             <p className="text-gray-600">
-              Showing Visa's top threads and how they were created over time
+              Showing Visa&apos;s top threads and how they were created over
+              time
             </p>
           </div>
         </div>
