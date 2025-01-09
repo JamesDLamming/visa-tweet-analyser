@@ -26,6 +26,355 @@ ChartJS.register(
   zoomPlugin
 );
 
+const ThreadMetricsSection = ({
+  threadMetrics,
+  activeMetric,
+  selectedThread,
+  handleThreadSelection,
+  handleMetricChange,
+}) => {
+  const metricLabels = {
+    byLength: "Longest Threads",
+    byLikes: "Most Liked Threads",
+    byRetweets: "Most Retweeted Threads",
+    byDuration: "Longest Duration Threads",
+  };
+
+  const formatDuration = (minutes) => {
+    if (minutes < 1) return "less than a day";
+    if (minutes < 1440) return `${Math.round(minutes / 60)} hours`;
+    const days = Math.floor(minutes / 1440);
+    const remainingHours = Math.round((minutes % 1440) / 60);
+    return `${days}d ${remainingHours}h`;
+  };
+
+  // Helper function to determine if a column should be highlighted
+  const isHighlighted = (metric) => {
+    const highlights = {
+      byLength: "length",
+      byLikes: "likes",
+      byRetweets: "retweets",
+      byDuration: "duration",
+    };
+    return highlights[activeMetric] === metric;
+  };
+
+  // Helper function to render column header with optional arrow
+  const renderColumnHeader = (title, metric) => {
+    const highlighted = isHighlighted(metric);
+    return (
+      <th
+        className={`px-2 py-2 text-left text-sm sm:text-base ${
+          highlighted ? "sm:bg-blue-50" : ""
+        }`}
+      >
+        <div className="flex items-center gap-[2px]">
+          {title}
+          {highlighted && <span className="sm:text-blue-500">↓</span>}
+        </div>
+      </th>
+    );
+  };
+
+  // Add this function to determine which columns to show based on screen size
+  const getVisibleColumns = () => {
+    // Using window.innerWidth directly isn't ideal for React
+    // Consider using a useMediaQuery hook or CSS approach instead
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+      return {
+        rank: true,
+        firstTweet: true,
+        [activeMetric.replace("by", "").toLowerCase()]: true, // Show only active metric column
+        startDate: false,
+        endDate: false,
+        length: activeMetric === "byLength",
+        likes: activeMetric === "byLikes",
+        retweets: activeMetric === "byRetweets",
+        duration: activeMetric === "byDuration",
+      };
+    }
+
+    return {
+      rank: true,
+      firstTweet: true,
+      length: true,
+      likes: true,
+      retweets: true,
+      duration: true,
+      startDate: true,
+      endDate: true,
+    };
+  };
+
+  // Add ref for the table container
+  const tableContainerRef = useRef(null);
+  const rowRefs = useRef({});
+
+  // Add useEffect to handle scrolling when selected thread changes
+  useEffect(() => {
+    if (
+      selectedThread &&
+      rowRefs.current[selectedThread.id] &&
+      tableContainerRef.current
+    ) {
+      const row = rowRefs.current[selectedThread.id];
+      const container = tableContainerRef.current;
+
+      const rowTop = row.offsetTop;
+      const rowBottom = rowTop + row.offsetHeight;
+      const containerTop = container.scrollTop;
+      const containerBottom = containerTop + container.clientHeight;
+
+      // Only scroll if the row is not fully visible in the viewport
+      const isRowVisible =
+        rowTop >= containerTop && rowBottom <= containerBottom;
+
+      if (!isRowVisible) {
+        container.scrollTo({
+          top: rowTop - container.clientHeight / 2,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [selectedThread]);
+
+  return (
+    <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
+
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {Object.entries(metricLabels).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => handleMetricChange(key)}
+            className={`px-4 py-2 rounded ${
+              key === activeMetric
+                ? "bg-blue-500 text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div
+        ref={tableContainerRef}
+        className="overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
+      >
+        <div className="pr-2 sm:pr-0 w-full table-auto">
+          <table className="table-auto w-full">
+            <thead className="bg-gray-200">
+              <tr>
+                {getVisibleColumns().rank && (
+                  <th className="w-12 px-2 py-2 text-left text-sm sm:text-base">
+                    Rank
+                  </th>
+                )}
+                {getVisibleColumns().firstTweet && (
+                  <th className="w-full sm:w-auto px-2 py-2 text-left text-sm sm:text-base">
+                    First Tweet
+                  </th>
+                )}
+                {getVisibleColumns().length &&
+                  renderColumnHeader("Length", "length")}
+                {getVisibleColumns().likes &&
+                  renderColumnHeader("Likes", "likes")}
+                {getVisibleColumns().retweets &&
+                  renderColumnHeader("RTs", "retweets")}
+                {getVisibleColumns().duration &&
+                  renderColumnHeader("Duration", "duration")}
+                {getVisibleColumns().startDate && (
+                  <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
+                    Start
+                  </th>
+                )}
+                {getVisibleColumns().endDate && (
+                  <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
+                    End
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {threadMetrics[activeMetric].map((thread, index) => (
+                <tr
+                  key={thread.id}
+                  ref={(el) => (rowRefs.current[thread.id] = el)}
+                  className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
+                    selectedThread?.id === thread.id ? "bg-gray-100 " : ""
+                  }`}
+                  onClick={() => handleThreadSelection(thread)}
+                >
+                  {getVisibleColumns().rank && (
+                    <td className="px-2 py-2">{index + 1}</td>
+                  )}
+                  {getVisibleColumns().firstTweet && (
+                    <td className="px-2 py-2">
+                      <div className="max-w-[150px] sm:max-w-sm">
+                        <p className="text-xs sm:text-sm">
+                          {thread.tweets[0].text}
+                        </p>
+                      </div>
+                    </td>
+                  )}
+                  {getVisibleColumns().length && (
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("length") ? "sm:bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.length.toLocaleString()}
+                    </td>
+                  )}
+                  {getVisibleColumns().likes && (
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("likes") ? "sm:bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.totalLikes.toLocaleString()}
+                    </td>
+                  )}
+                  {getVisibleColumns().retweets && (
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("retweets") ? "sm:bg-blue-50" : ""
+                      }`}
+                    >
+                      {thread.totalRetweets.toLocaleString()}
+                    </td>
+                  )}
+                  {getVisibleColumns().duration && (
+                    <td
+                      className={`px-2 py-2 ${
+                        isHighlighted("duration") ? "sm:bg-blue-50" : ""
+                      }`}
+                    >
+                      {formatDuration(thread.duration)}
+                    </td>
+                  )}
+                  {getVisibleColumns().startDate && (
+                    <td className="hidden md:table-cell px-2 py-2">
+                      {thread.startDate.toLocaleDateString()}
+                    </td>
+                  )}
+                  {getVisibleColumns().endDate && (
+                    <td className="hidden md:table-cell px-2 py-2">
+                      {thread.endDate.toLocaleDateString()}
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ThreadDisplay = ({
+  selectedThread,
+  highlightedTweetId,
+  setHighlightedTweetId,
+}) => {
+  const scrollContainerRef = useRef(null);
+  const tweetRefs = useRef({});
+
+  // Scroll effect for graph clicks
+  useEffect(() => {
+    if (highlightedTweetId && tweetRefs.current[highlightedTweetId]) {
+      const tweetElement = tweetRefs.current[highlightedTweetId];
+      const container = scrollContainerRef.current;
+
+      // Get the current scroll position
+      const currentScroll = container.scrollTop;
+
+      // Get the element's position relative to the container
+      const elementTop = tweetElement.offsetTop - container.offsetTop;
+
+      // Only scroll if the element is not visible in the viewport
+      const containerHeight = container.clientHeight;
+      if (
+        elementTop < currentScroll ||
+        elementTop > currentScroll + containerHeight
+      ) {
+        container.scrollTo({
+          top: elementTop - containerHeight / 2,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [highlightedTweetId]);
+
+  if (!selectedThread) return null;
+
+  const sortedTweets = selectedThread.tweets.sort((a, b) => a.order - b.order);
+
+  return (
+    <div className="bg-white p-4 pr-2 rounded-lg shadow mb-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Thread Details</h2>
+        <div className="text-sm text-gray-500 pr-2">
+          {selectedThread.startDate.toLocaleDateString()} -{" "}
+          {selectedThread.endDate.toLocaleDateString()}
+        </div>
+      </div>
+
+      {/* Key the scroll container to selectedThread.id to maintain scroll position */}
+      <div
+        key={selectedThread.id}
+        ref={scrollContainerRef}
+        className="max-h-[500px] md:max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
+      >
+        <div className="pr-2 space-y-4 ">
+          {sortedTweets.map((tweet) => (
+            <div
+              key={tweet.tweet_id}
+              ref={(el) => (tweetRefs.current[tweet.tweet_id] = el)}
+              className={`p-4 rounded-lg ${
+                tweet.tweet_id === highlightedTweetId
+                  ? "bg-blue-50"
+                  : "bg-gray-50"
+              } cursor-pointer transition-all`}
+              onClick={() => setHighlightedTweetId(tweet.tweet_id)}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs sm:text-sm font-medium text-gray-500">
+                  Tweet {tweet.order} of {sortedTweets.length}
+                </span>
+                <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-500">
+                  <span>♥ {tweet.favorite_count}</span>
+                  <span>🔄 {tweet.retweet_count}</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-xs sm:text-sm text-gray-500">
+                  Posted at: {new Date(tweet.created_at).toLocaleString()}
+                </span>
+              </div>
+              <p className="text-gray-700 text-sm sm:text-base">{tweet.text}</p>
+              <div className="mt-2 text-xs sm:text-sm text-gray-500">
+                <a
+                  href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  View →
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function ThreadDistribution() {
   const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
@@ -117,256 +466,14 @@ function ThreadDistribution() {
     );
   }
 
-  // Add this function to handle row selection
+  // Move these handlers to the main component
   const handleThreadSelection = (thread) => {
     setSelectedThread(thread);
   };
 
-  const ThreadMetricsSection = () => {
-    const metricLabels = {
-      byLength: "Longest Threads",
-      byLikes: "Most Liked Threads",
-      byRetweets: "Most Retweeted Threads",
-      byDuration: "Longest Duration Threads",
-    };
-
-    const formatDuration = (minutes) => {
-      if (minutes < 1) return "less than a day";
-      if (minutes < 1440) return `${Math.round(minutes / 60)} hours`;
-      const days = Math.floor(minutes / 1440);
-      const remainingHours = Math.round((minutes % 1440) / 60);
-      return `${days}d ${remainingHours}h`;
-    };
-
-    // Helper function to determine if a column should be highlighted
-    const isHighlighted = (metric) => {
-      const highlights = {
-        byLength: "length",
-        byLikes: "likes",
-        byRetweets: "retweets",
-        byDuration: "duration",
-      };
-      return highlights[activeMetric] === metric;
-    };
-
-    // Update metric change handler to also update selected thread
-    const handleMetricChange = (metric) => {
-      setActiveMetric(metric);
-      // Set the first thread of the new metric as selected
-      setSelectedThread(threadMetrics[metric][0]);
-    };
-
-    // Helper function to render column header with optional arrow
-    const renderColumnHeader = (title, metric) => {
-      const highlighted = isHighlighted(metric);
-      return (
-        <th
-          className={`px-2 py-2 text-left text-sm sm:text-base ${
-            highlighted ? "sm:bg-blue-50" : ""
-          }`}
-        >
-          <div className="flex items-center gap-[2px]">
-            {title}
-            {highlighted && <span className="sm:text-blue-500">↓</span>}
-          </div>
-        </th>
-      );
-    };
-
-    // Add this function to determine which columns to show based on screen size
-    const getVisibleColumns = () => {
-      // Using window.innerWidth directly isn't ideal for React
-      // Consider using a useMediaQuery hook or CSS approach instead
-      const isMobile = window.innerWidth < 768;
-
-      if (isMobile) {
-        return {
-          rank: true,
-          firstTweet: true,
-          [activeMetric.replace("by", "").toLowerCase()]: true, // Show only active metric column
-          startDate: false,
-          endDate: false,
-          length: activeMetric === "byLength",
-          likes: activeMetric === "byLikes",
-          retweets: activeMetric === "byRetweets",
-          duration: activeMetric === "byDuration",
-        };
-      }
-
-      return {
-        rank: true,
-        firstTweet: true,
-        length: true,
-        likes: true,
-        retweets: true,
-        duration: true,
-        startDate: true,
-        endDate: true,
-      };
-    };
-
-    // Add ref for the table container
-    const tableContainerRef = useRef(null);
-    const rowRefs = useRef({});
-
-    // Add useEffect to handle scrolling when selected thread changes
-    useEffect(() => {
-      if (
-        selectedThread &&
-        rowRefs.current[selectedThread.id] &&
-        tableContainerRef.current
-      ) {
-        const row = rowRefs.current[selectedThread.id];
-        const container = tableContainerRef.current;
-
-        const rowTop = row.offsetTop;
-        const containerHeight = container.clientHeight;
-        const scrollTop = container.scrollTop;
-
-        // Only scroll if the row is not visible in the viewport
-        if (rowTop < scrollTop || rowTop > scrollTop + containerHeight) {
-          container.scrollTo({
-            top: rowTop - containerHeight / 2,
-            behavior: "smooth",
-          });
-        }
-      }
-    }, [selectedThread]);
-
-    return (
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
-
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {Object.entries(metricLabels).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => handleMetricChange(key)}
-              className={`px-4 py-2 rounded ${
-                key === activeMetric
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 hover:bg-gray-200"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        <div
-          ref={tableContainerRef}
-          className="overflow-y-auto max-h-[400px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
-        >
-          <div className="pr-2 sm:pr-0 w-full table-auto">
-            <table className="table-auto w-full">
-              <thead className="bg-gray-200">
-                <tr>
-                  {getVisibleColumns().rank && (
-                    <th className="w-12 px-2 py-2 text-left text-sm sm:text-base">
-                      Rank
-                    </th>
-                  )}
-                  {getVisibleColumns().firstTweet && (
-                    <th className="w-full sm:w-auto px-2 py-2 text-left text-sm sm:text-base">
-                      First Tweet
-                    </th>
-                  )}
-                  {getVisibleColumns().length &&
-                    renderColumnHeader("Length", "length")}
-                  {getVisibleColumns().likes &&
-                    renderColumnHeader("Likes", "likes")}
-                  {getVisibleColumns().retweets &&
-                    renderColumnHeader("RTs", "retweets")}
-                  {getVisibleColumns().duration &&
-                    renderColumnHeader("Duration", "duration")}
-                  {getVisibleColumns().startDate && (
-                    <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
-                      Start
-                    </th>
-                  )}
-                  {getVisibleColumns().endDate && (
-                    <th className="hidden md:table-cell px-2 py-2 text-left text-sm sm:text-base">
-                      End
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {threadMetrics[activeMetric].map((thread, index) => (
-                  <tr
-                    key={thread.id}
-                    ref={(el) => (rowRefs.current[thread.id] = el)}
-                    className={`border-t text-sm text-gray-600 hover:bg-gray-100 cursor-pointer ${
-                      selectedThread?.id === thread.id ? "bg-gray-100 " : ""
-                    }`}
-                    onClick={() => handleThreadSelection(thread)}
-                  >
-                    {getVisibleColumns().rank && (
-                      <td className="px-2 py-2">{index + 1}</td>
-                    )}
-                    {getVisibleColumns().firstTweet && (
-                      <td className="px-2 py-2">
-                        <div className="max-w-[150px] sm:max-w-sm">
-                          <p className="text-xs sm:text-sm">
-                            {thread.tweets[0].text}
-                          </p>
-                        </div>
-                      </td>
-                    )}
-                    {getVisibleColumns().length && (
-                      <td
-                        className={`px-2 py-2 ${
-                          isHighlighted("length") ? "sm:bg-blue-50" : ""
-                        }`}
-                      >
-                        {thread.length.toLocaleString()}
-                      </td>
-                    )}
-                    {getVisibleColumns().likes && (
-                      <td
-                        className={`px-2 py-2 ${
-                          isHighlighted("likes") ? "sm:bg-blue-50" : ""
-                        }`}
-                      >
-                        {thread.totalLikes.toLocaleString()}
-                      </td>
-                    )}
-                    {getVisibleColumns().retweets && (
-                      <td
-                        className={`px-2 py-2 ${
-                          isHighlighted("retweets") ? "sm:bg-blue-50" : ""
-                        }`}
-                      >
-                        {thread.totalRetweets.toLocaleString()}
-                      </td>
-                    )}
-                    {getVisibleColumns().duration && (
-                      <td
-                        className={`px-2 py-2 ${
-                          isHighlighted("duration") ? "sm:bg-blue-50" : ""
-                        }`}
-                      >
-                        {formatDuration(thread.duration)}
-                      </td>
-                    )}
-                    {getVisibleColumns().startDate && (
-                      <td className="hidden md:table-cell px-2 py-2">
-                        {thread.startDate.toLocaleDateString()}
-                      </td>
-                    )}
-                    {getVisibleColumns().endDate && (
-                      <td className="hidden md:table-cell px-2 py-2">
-                        {thread.endDate.toLocaleDateString()}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    );
+  const handleMetricChange = (metric) => {
+    setActiveMetric(metric);
+    setSelectedThread(threadMetrics[metric][0]);
   };
 
   const getThreadTimelineData = () => {
@@ -487,106 +594,6 @@ function ThreadDistribution() {
     },
   };
 
-  // Add new component to display thread tweets
-  const ThreadDisplay = () => {
-    const scrollContainerRef = useRef(null);
-    const tweetRefs = useRef({});
-
-    // Scroll effect for graph clicks
-    useEffect(() => {
-      if (highlightedTweetId && tweetRefs.current[highlightedTweetId]) {
-        const tweetElement = tweetRefs.current[highlightedTweetId];
-        const container = scrollContainerRef.current;
-
-        // Get the current scroll position
-        const currentScroll = container.scrollTop;
-
-        // Get the element's position relative to the container
-        const elementTop = tweetElement.offsetTop - container.offsetTop;
-
-        // Only scroll if the element is not visible in the viewport
-        const containerHeight = container.clientHeight;
-        if (
-          elementTop < currentScroll ||
-          elementTop > currentScroll + containerHeight
-        ) {
-          container.scrollTo({
-            top: elementTop - containerHeight / 2,
-            behavior: "smooth",
-          });
-        }
-      }
-    }, [highlightedTweetId]);
-
-    if (!selectedThread) return null;
-
-    const sortedTweets = selectedThread.tweets.sort(
-      (a, b) => a.order - b.order
-    );
-
-    return (
-      <div className="bg-white p-4 pr-2 rounded-lg shadow mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Thread Details</h2>
-          <div className="text-sm text-gray-500 pr-2">
-            {selectedThread.startDate.toLocaleDateString()} -{" "}
-            {selectedThread.endDate.toLocaleDateString()}
-          </div>
-        </div>
-
-        {/* Key the scroll container to selectedThread.id to maintain scroll position */}
-        <div
-          key={selectedThread.id}
-          ref={scrollContainerRef}
-          className="max-h-[500px] md:max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400"
-        >
-          <div className="pr-2 space-y-4 ">
-            {sortedTweets.map((tweet) => (
-              <div
-                key={tweet.tweet_id}
-                ref={(el) => (tweetRefs.current[tweet.tweet_id] = el)}
-                className={`p-4 rounded-lg ${
-                  tweet.tweet_id === highlightedTweetId
-                    ? "bg-blue-50"
-                    : "bg-gray-50"
-                } cursor-pointer transition-all`}
-                onClick={() => setHighlightedTweetId(tweet.tweet_id)}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs sm:text-sm font-medium text-gray-500">
-                    Tweet {tweet.order} of {sortedTweets.length}
-                  </span>
-                  <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-500">
-                    <span>♥ {tweet.favorite_count}</span>
-                    <span>🔄 {tweet.retweet_count}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs sm:text-sm text-gray-500">
-                    Posted at: {new Date(tweet.created_at).toLocaleString()}
-                  </span>
-                </div>
-                <p className="text-gray-700 text-sm sm:text-base">
-                  {tweet.text}
-                </p>
-                <div className="mt-2 text-xs sm:text-sm text-gray-500">
-                  <a
-                    href={`https://twitter.com/visakanv/status/${tweet.tweet_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 hover:text-blue-600"
-                  >
-                    View →
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="p-4">
       <div className="mb-6">
@@ -622,12 +629,22 @@ function ThreadDistribution() {
           </p>
         </div>
       </div>
-      <ThreadMetricsSection />
+      <ThreadMetricsSection
+        threadMetrics={threadMetrics}
+        activeMetric={activeMetric}
+        selectedThread={selectedThread}
+        handleThreadSelection={handleThreadSelection}
+        handleMetricChange={handleMetricChange}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6">
         <div className="hidden md:block">
-          <ThreadDisplay />
-        </div>{" "}
+          <ThreadDisplay
+            selectedThread={selectedThread}
+            highlightedTweetId={highlightedTweetId}
+            setHighlightedTweetId={setHighlightedTweetId}
+          />
+        </div>
         <div className="bg-white p-4 rounded-lg shadow mb-6 col-span-2">
           <div className="h-[300px] md:h-[600px]">
             <Line
@@ -651,7 +668,11 @@ function ThreadDistribution() {
           </div>
         </div>
         <div className="block md:hidden">
-          <ThreadDisplay />
+          <ThreadDisplay
+            selectedThread={selectedThread}
+            highlightedTweetId={highlightedTweetId}
+            setHighlightedTweetId={setHighlightedTweetId}
+          />
         </div>
       </div>
     </div>
