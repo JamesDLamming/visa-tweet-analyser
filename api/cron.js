@@ -76,7 +76,9 @@ export default async function handler(req, res) {
     if (error) throw error;
 
     // Read the current upload.json file
-    const uploadJson = JSON.parse(await fs.readFile("upload.json", "utf-8"));
+    const uploadJson = JSON.parse(
+      await fs.readFile(process.cwd() + "/upload.json", "utf-8")
+    );
     const currentEndDate = new Date(uploadJson[0].endDate);
     const newEndDate = new Date(archiveData[0].archive_at);
 
