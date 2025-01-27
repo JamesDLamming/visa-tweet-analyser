@@ -75,10 +75,13 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
+    // Construct proper URL with protocol
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
+
     // Fetch upload.json from public directory
-    const uploadJsonResponse = await fetch(
-      `${process.env.VERCEL_URL || "http://localhost:3000"}/upload.json`
-    );
+    const uploadJsonResponse = await fetch(`${baseUrl}/upload.json`);
     if (!uploadJsonResponse.ok) {
       throw new Error(
         `Failed to fetch upload.json: ${uploadJsonResponse.statusText}`
