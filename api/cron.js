@@ -75,13 +75,17 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    // Construct proper URL with protocol
-    const baseUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000";
+    // Use your actual production URL
+    const baseUrl = "https://visa-tweet-analyser.vercel.app";
 
-    // Fetch upload.json from public directory
-    const uploadJsonResponse = await fetch(`${baseUrl}/upload.json`);
+    // Add headers to the fetch request
+    const uploadJsonResponse = await fetch(`${baseUrl}/upload.json`, {
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "VercelServerlessFunction",
+      },
+    });
+
     if (!uploadJsonResponse.ok) {
       throw new Error(
         `Failed to fetch upload.json: ${uploadJsonResponse.statusText}`
