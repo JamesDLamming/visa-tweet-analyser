@@ -96,8 +96,6 @@ export default async function handler(req, res) {
     const currentEndDate = new Date(uploadJson[0].endDate);
     const newEndDate = new Date(archiveData[0].archive_at);
 
-    await sendNotificationEmail(currentEndDate, newEndDate);
-
     // Check if the end dates are different
     if (newEndDate > currentEndDate) {
       try {
