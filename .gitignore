@@ -1,17 +1,3 @@
-# Large JSON files
-account.json
-countSelfQuotes.json
-not_found_tweets.json
-profile.json
-selfQuotedTweets.json
-totalTweetLength.json
-tweet_results.json
-tweets.json
-upload.json
-visakanv.json
-twitter_threads.json
-thread_statistics.json
-
 # Dependencies
 /node_modules
 /.pnp
@@ -56,3 +42,7 @@ dist-ssr
 
 # Logs
 logs/*
+.vercel
+
+# Vercel
+.vercel
