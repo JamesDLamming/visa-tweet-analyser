@@ -135,14 +135,14 @@ function TopTweets() {
           {displayTweets && displayTweets.length > 0 && (
             <button
               onClick={() => exportTweetsToCSV(displayTweets)}
-              className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
+              className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded-sm"
             >
               Export CSV
             </button>
           )}
           <button
             onClick={() => setShowNormalized(!showNormalized)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm"
           >
             {showNormalized ? "Regular View" : "Normalize by Age"}
           </button>

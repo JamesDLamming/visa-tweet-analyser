@@ -300,10 +300,10 @@ function TweetGrowth() {
         </div>
       </div>
 
-      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Key Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 border rounded">
+          <div className="p-4 border rounded-sm">
             <h3 className="text-lg font-medium mb-2">
               Average Tweets per Month
             </h3>
@@ -314,17 +314,17 @@ function TweetGrowth() {
               ).toLocaleString()}
             </p>
           </div>
-          <div className="p-4 border rounded">
+          <div className="p-4 border rounded-sm">
             <h3 className="text-lg font-medium mb-2">Most Active Month</h3>
             <p className="text-2xl font-bold">{getMostActiveMonth()}</p>
           </div>
-          <div className="p-4 border rounded">
+          <div className="p-4 border rounded-sm">
             <h3 className="text-lg font-medium mb-2">Years Active</h3>
             <p className="text-2xl font-bold">{getYearsActive()}</p>
           </div>
         </div>
       </div>
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="bg-white p-4 rounded-lg shadow-sm">
         <div className="h-[300px] md:h=[350px]">
           <Line data={chartData} options={chartOptions} ref={chartRef} />
         </div>
@@ -336,13 +336,13 @@ function TweetGrowth() {
                 chart.resetZoom();
               }
             }}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-sm"
           >
             Reset Zoom
           </button>
           <button
             onClick={() => setShowCumulative(!showCumulative)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm text-sm"
           >
             Show {showCumulative ? "Monthly" : "Cumulative"} View
           </button>

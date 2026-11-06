@@ -337,7 +337,7 @@ function TemporalAnalysis() {
           <div className="space-x-2 space-y-2">
             <button
               onClick={() => handleViewChange("year")}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded-sm ${
                 viewMode === "year"
                   ? "bg-blue-500 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -347,7 +347,7 @@ function TemporalAnalysis() {
             </button>
             <button
               onClick={() => handleViewChange("month")}
-              className={`px-4 py-2 rounded ${
+              className={`px-4 py-2 rounded-sm ${
                 viewMode === "month"
                   ? "bg-blue-500 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -357,7 +357,7 @@ function TemporalAnalysis() {
             </button>
             <button
               onClick={() => setShowNormalized(!showNormalized)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm"
             >
               {showNormalized ? "Regular View" : "Normalize by Age"}
             </button>
@@ -365,7 +365,7 @@ function TemporalAnalysis() {
         </div>
         <button
           onClick={downloadCSV}
-          className="px-4 py-2 mb-4 bg-green-500 text-white rounded hover:bg-green-600"
+          className="px-4 py-2 mb-4 bg-green-500 text-white rounded-sm hover:bg-green-600"
         >
           Export CSV
         </button>
@@ -380,7 +380,7 @@ function TemporalAnalysis() {
           </h1>
           <button
             onClick={downloadCSV}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="px-4 py-2 bg-green-500 text-white rounded-sm hover:bg-green-600"
           >
             Export CSV
           </button>
@@ -389,7 +389,7 @@ function TemporalAnalysis() {
         <div className="space-x-2 mb-4">
           <button
             onClick={() => handleViewChange("year")}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-sm ${
               viewMode === "year"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -399,7 +399,7 @@ function TemporalAnalysis() {
           </button>
           <button
             onClick={() => handleViewChange("month")}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-sm ${
               viewMode === "month"
                 ? "bg-blue-500 text-white"
                 : "bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -409,14 +409,14 @@ function TemporalAnalysis() {
           </button>
           <button
             onClick={() => setShowNormalized(!showNormalized)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm"
           >
             {showNormalized ? "Regular View" : "Normalize by Age"}
           </button>
         </div>
       </div>
 
-      <div className="mb-6 bg-white p-4 rounded-lg shadow">
+      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
         <Bar ref={chartRef} data={chartData} options={chartOptions} />
         <div className="mt-2 text-center">
           <button
@@ -426,7 +426,7 @@ function TemporalAnalysis() {
                 chart.resetZoom();
               }
             }}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-sm"
           >
             Reset Zoom
           </button>
@@ -434,7 +434,7 @@ function TemporalAnalysis() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">
               {viewMode === "year" ? "Yearly" : "Monthly"} Breakdown
@@ -475,7 +475,7 @@ function TemporalAnalysis() {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white p-4 rounded-lg shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">
               {selectedPeriod
@@ -487,7 +487,7 @@ function TemporalAnalysis() {
                 <select
                   value={tweetSortBy}
                   onChange={(e) => setTweetSortBy(e.target.value)}
-                  className="px-2 py-2 border rounded bg-white text-sm"
+                  className="px-2 py-2 border rounded-sm bg-white text-sm"
                 >
                   <option value="date">Sort by Date</option>
                   <option value="quotes">Sort by Quotes</option>
@@ -498,7 +498,7 @@ function TemporalAnalysis() {
                       tweetSortDirection === "asc" ? "desc" : "asc"
                     )
                   }
-                  className="px-3 py-2 border rounded hover:bg-gray-100"
+                  className="px-3 py-2 border rounded-sm hover:bg-gray-100"
                   title={
                     tweetSortDirection === "asc"
                       ? "Sort Descending"

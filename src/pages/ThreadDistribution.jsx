@@ -142,7 +142,7 @@ const ThreadMetricsSection = ({
   }, [selectedThread]);
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow mb-6">
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
       <h2 className="text-xl font-bold mb-4">Thread Metrics</h2>
 
       <div className="flex gap-2 mb-4 flex-wrap">
@@ -150,7 +150,7 @@ const ThreadMetricsSection = ({
           <button
             key={key}
             onClick={() => handleMetricChange(key)}
-            className={`px-4 py-2 rounded ${
+            className={`px-4 py-2 rounded-sm ${
               key === activeMetric
                 ? "bg-blue-500 text-white"
                 : "bg-gray-100 hover:bg-gray-200"
@@ -329,7 +329,7 @@ const ThreadDisplay = ({
   const sortedTweets = selectedThread.tweets.sort((a, b) => a.order - b.order);
 
   return (
-    <div className="bg-white p-4 pr-2 rounded-lg shadow mb-6">
+    <div className="bg-white p-4 pr-2 rounded-lg shadow-sm mb-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">Thread Details</h2>
         <div className="text-sm text-gray-500 pr-2">
@@ -643,19 +643,19 @@ function ThreadDistribution() {
       </div>
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <h3 className="text-sm font-medium text-gray-500">Total Threads</h3>
           <p className="text-2xl font-bold">
             {statistics.totalThreads.toLocaleString()}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <h3 className="text-sm font-medium text-gray-500">Longest Thread</h3>
           <p className="text-2xl font-bold">
             {statistics.longestThread.length.toLocaleString()} tweets
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <h3 className="text-sm font-medium text-gray-500">
             Average Thread Length
           </h3>
@@ -680,7 +680,7 @@ function ThreadDistribution() {
             setHighlightedTweetId={setHighlightedTweetId}
           />
         </div>
-        <div className="bg-white p-4 rounded-lg shadow mb-6 col-span-2">
+        <div className="bg-white p-4 rounded-lg shadow-sm mb-6 col-span-2">
           <div className="h-[300px] md:h-[600px]">
             <Line
               data={getThreadTimelineData()}
@@ -696,7 +696,7 @@ function ThreadDistribution() {
                   chart.resetZoom();
                 }
               }}
-              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+              className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-sm"
             >
               Reset Zoom
             </button>

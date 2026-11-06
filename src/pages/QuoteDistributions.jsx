@@ -451,7 +451,7 @@ function QuoteDistributions() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
-          className="md:col-span-1 bg-white p-4 rounded-lg shadow max-h-fit"
+          className="md:col-span-1 bg-white p-4 rounded-lg shadow-sm max-h-fit"
           id="top-100-tweets"
         >
           {/* Tweet List - Hidden on Mobile unless expanded */}
@@ -465,7 +465,7 @@ function QuoteDistributions() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-2 py-2 border rounded bg-white"
+                className="px-2 py-2 border rounded-sm bg-white"
               >
                 <option value="quotes">Sort by Quotes</option>
                 <option value="date">Sort by Date Created</option>
@@ -474,7 +474,7 @@ function QuoteDistributions() {
                 onClick={() =>
                   setSortDirection(sortDirection === "asc" ? "desc" : "asc")
                 }
-                className="px-3 py-2 border rounded hover:bg-gray-100"
+                className="px-3 py-2 border rounded-sm hover:bg-gray-100"
                 title={
                   sortDirection === "asc" ? "Sort Descending" : "Sort Ascending"
                 }
@@ -485,7 +485,7 @@ function QuoteDistributions() {
             <div className="my-2">
               <button
                 onClick={() => setShowNormalized(!showNormalized)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm"
               >
                 {showNormalized ? "Regular View" : "Normalize by Age"}
               </button>
@@ -495,7 +495,7 @@ function QuoteDistributions() {
               {selectedTweet && (
                 <div className="mb-4">
                   <div
-                    className={`p-4 rounded border border-blue-200 bg-blue-50`}
+                    className={`p-4 rounded-sm border border-blue-200 bg-blue-50`}
                   >
                     <p className="text-sm text-gray-500 mb-1">
                       {showNormalized
@@ -559,7 +559,7 @@ function QuoteDistributions() {
               .map((tweet) => (
                 <div
                   key={tweet.tweet_id}
-                  className={`p-4 rounded cursor-pointer transition-colors ${
+                  className={`p-4 rounded-sm cursor-pointer transition-colors ${
                     selectedTweet?.tweet_id === tweet.tweet_id
                       ? "bg-blue-50 border border-blue-200"
                       : "hover:bg-gray-50 border"
@@ -610,7 +610,7 @@ function QuoteDistributions() {
               .map((tweet) => (
                 <div
                   key={tweet.tweet_id}
-                  className={`p-4 rounded cursor-pointer transition-colors ${
+                  className={`p-4 rounded-sm cursor-pointer transition-colors ${
                     selectedTweet?.tweet_id === tweet.tweet_id
                       ? "bg-blue-50 border border-blue-200"
                       : "bg-gray-50 hover:bg-gray-100 border"
@@ -637,7 +637,7 @@ function QuoteDistributions() {
           </div>
         </div>
 
-        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow">
+        <div className="md:col-span-2 bg-white p-4 rounded-lg shadow-sm">
           {selectedTweet && (
             <>
               <div className="mb-4">
@@ -647,7 +647,7 @@ function QuoteDistributions() {
                   </h2>
                 </div>
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 p-3 rounded">
+                  <div className="bg-gray-50 p-3 rounded-sm">
                     <h3 className="text-sm font-medium text-gray-500">
                       Total Quotes
                     </h3>
@@ -657,7 +657,7 @@ function QuoteDistributions() {
                       ]?.length.toLocaleString() || 0}
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded">
+                  <div className="bg-gray-50 p-3 rounded-sm">
                     <h3 className="text-sm font-medium text-gray-500">
                       Most Active Month
                     </h3>
@@ -682,7 +682,7 @@ function QuoteDistributions() {
                       quotes
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-3 rounded">
+                  <div className="bg-gray-50 p-3 rounded-sm">
                     <h3 className="text-sm font-medium text-gray-500">
                       Average per Month
                     </h3>
@@ -694,7 +694,7 @@ function QuoteDistributions() {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 bg-gray-50 p-4 rounded">
+                <div className="mt-4 bg-gray-50 p-4 rounded-sm">
                   <p className="text-gray-600">{selectedTweet.tweet_text}</p>
 
                   <div className="text-sm text-gray-500 mt-1 flex gap-4">
@@ -736,13 +736,13 @@ function QuoteDistributions() {
                       chart.resetZoom();
                     }
                   }}
-                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                  className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-sm"
                 >
                   Reset Zoom
                 </button>
                 <button
                   onClick={() => setShowMonthly(!showMonthly)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-sm text-sm"
                 >
                   {showMonthly ? "Show Cumulative" : "Show Monthly"}
                 </button>
@@ -761,7 +761,7 @@ function QuoteDistributions() {
                                 quoteData[selectedTweet.tweet_id]
                               )
                             }
-                            className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded"
+                            className="text-sm text-blue-500 hover:text-blue-600 px-3 py-1 border rounded-sm"
                           >
                             Export CSV
                           </button>
